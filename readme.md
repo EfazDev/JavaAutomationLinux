@@ -6,7 +6,7 @@
 > To be able to run this extension make sure you have already installed the latest python version: https://www.python.org/downloads/
 > open a cmd and run this command:         pip install psutil robloxapi pyautogui pillow
 
-Once you are done drag JavaAutomation.py and UserID.txt to the mewt sniper folder, put your roblox user ID in the UserID text file  and run JavaAutomation.py, wait for it to load all the needed stuff and then it will run mewt automatcally
+Once you are done drag JavaAutomation.py to the mewt sniper folder and run JavaAutomation.py, wait for it to load all the needed stuff and then it will run mewt automatcally
 
 
 #Remember to join Java Automation server to get updates and news: https://discord.gg/javaw
