@@ -261,7 +261,7 @@ def sync_inventory(wait=2, max_retry=3, print=False):
                 if cursor == None: break
             else:
                 error = response["errors"]
-                print("There's an issue while loading your inventory.")
+                __builtins__.print("There's an issue while loading your inventory. This can happen if your inventory is private or not viewable with the API. Skipped section")
                 count += 1
                 if cursor == None: break
     else:
@@ -301,7 +301,7 @@ def sync_inventory(wait=2, max_retry=3, print=False):
                 if cursor == None: resolved = True
             else:
                 error = response["errors"]
-                print("There's an issue while loading your inventory.")
+                __builtins__.print("There's an issue while loading your inventory. This can happen if your inventory is private or not viewable with the API. Skipped section")
                 count += 1
                 if cursor == None: break
     
