@@ -1,7 +1,7 @@
---Java Automation--
+# Java Automation
 
-# This is made by Java#9999
-# Linux Support by EfazDev#0220
+## This is made by Java#9999
+## Linux Support by EfazDev#0220
 
 > To be able to run this extension make sure you have already installed the latest python version: https://www.python.org/downloads/
 > open a cmd and run this command:         pip install psutil robloxapi pyautogui pillow
