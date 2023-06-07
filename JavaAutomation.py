@@ -1229,14 +1229,14 @@ async def robloxid(ctx, new_id: int):
 @bot.command()
 @is_owner()
 async def check(ctx, cookie_type: str):
-    if cookie_type.lower() not in ['main', 'alt']:
+    if cookie_type not in ['main', 'alt']:
         await ctx.send('Invalid cookie type. Must be `main` or `alt`.')
         return
     
     with open('settings.json') as f:
         settings = json.load(f)
         
-    if cookie_type.lower() == 'main':
+    if cookie_type == 'main':
         cookies = settings["AUTHENTICATION"]["COOKIES"]
     else: 
         cookies = [settings["AUTHENTICATION"]["DETAILS_COOKIE"]]
