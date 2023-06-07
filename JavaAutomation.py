@@ -691,6 +691,7 @@ async def info(ctx):
     embed.add_field(name=f"{prefix}autorestart", value="Shows you the autorestart status", inline=False)
     embed.add_field(name=f"{prefix}screenshot", value="To take a screenshot of the current host machine", inline=False)
     embed.add_field(name=f"{prefix}update", value="Update JavaAutomation to latest version in GitHub.", inline=False)
+    embed.add_field(name=f"{prefix}shutdown", value="Shutdown Bot and mewt", inline=False)
     embed.add_field(name=f"{prefix}invite", value="To join JavaAutomation server", inline=False)
     embed.set_footer(text="Developed by: Java#9999 \nHelped by: Lag#1234")
     await ctx.send(embed=embed)
@@ -834,6 +835,24 @@ async def update(ctx):
         print("Server returned unknown status code. Extension not runned")
 
 #restart command
+@bot.command()
+@is_owner()
+async def shutdown(ctx):
+    try:
+        embed = Embed(title="Shutting down Mewt and JavaAutomation..", description="", color=Colour.from_rgb(255, 182, 193))
+        await ctx.send(embed=embed)
+        if os.path.exists("ExtenderRunner.py"):
+            os.system("pkill -f main.py")
+            __builtins__.print("Shutting down JavaAutomation...")
+            exit()
+        else:
+            os.system("pkill -f main.py")
+            __builtins__.print("Shutting down JavaAutomation...")
+            exit()
+    except Exception as e:
+        embed = Embed(title="Error", description="An error occurred while trying to shutdown the bot: {}".format(str(e)), color=Colour.red())
+        await ctx.send(embed=embed)
+
 @bot.command()
 @is_owner()
 async def restart(ctx):
