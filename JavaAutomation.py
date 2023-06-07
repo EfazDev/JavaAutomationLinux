@@ -129,28 +129,12 @@ def whichPythonCommand():
         return "python3"
     
 def restart_main_py():
-    for proc in psutil.process_iter():
-        name = proc.name()
-        if name == "python.exe":
-            cmdline = proc.cmdline()
-            if "main.py" in cmdline[1]:
-                pid = proc.pid
-                os.kill(pid, signal.SIGTERM)
-    
-    if whichPythonCommand() == "python3":
-        os.system("pkill -f main.py")
-    
-    subprocess.Popen([whichPythonCommand(), 'main.py'])
+    os.system("pkill -f main.py")
+    subprocess.Popen(["python3", 'main.py'])
 
 async def restart_bot(ctx):
     try:
         restart_main_py()
-        embed = discord.Embed(
-            title="Bot Restarted!",
-            description=f" ``` Bot was requested restart by system. main.py has been restarted! ```",
-            color=discord.Color.red()
-        )
-        await ctx.send(embed=embed)
     except Exception as e:
         pass
 
@@ -1212,7 +1196,7 @@ async def check(ctx, cookie_type: str):
             await ctx.send(embed=embed)
 
 # Run main.py when JavaAutomation.py is executed
-subprocess.Popen([whichPythonCommand(), 'main.py'])
+subprocess.Popen(["python3", 'main.py'])
 
 # Get the bot token from the settings
 bot_token = settings['MISC']['DISCORD']['TOKEN']
