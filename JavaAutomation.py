@@ -27,6 +27,14 @@ import threading
 
 print("Welcome to JavaAutomation")
 print("Device Info: " + platform.system())
+def whichPythonCommand():
+    LocalMachineOS = platform.system()
+    if LocalMachineOS == "win32" or LocalMachineOS == "win64" or LocalMachineOS == "Windows":
+        print("This version of JavaAutomation is not supported with Windows. Please use the Windows version. Python Script ended")
+        quit()
+    else:
+        return
+whichPythonCommand()
 
 #Load Settings
 with open('settings.json') as f:
@@ -118,15 +126,6 @@ def is_owner():
 def load_settings():
     with open("settings.json") as f:
         return json.load(f)
-    
-def whichPythonCommand():
-    LocalMachineOS = platform.system()
-    if LocalMachineOS == "Darwin" or LocalMachineOS == "Linux":
-        return "python3"
-    elif LocalMachineOS == "win32" or LocalMachineOS == "win64" or LocalMachineOS == "Windows":
-        return "python"
-    else:
-        return "python3"
     
 def restart_main_py():
     os.system("pkill -f main.py")
