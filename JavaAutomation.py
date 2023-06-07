@@ -690,6 +690,7 @@ async def info(ctx):
     embed.add_field(name=f"{prefix}autorestart off", value="Stops the autorestarter", inline=False)
     embed.add_field(name=f"{prefix}autorestart", value="Shows you the autorestart status", inline=False)
     embed.add_field(name=f"{prefix}screenshot", value="To take a screenshot of the current host machine", inline=False)
+    embed.add_field(name=f"{prefix}update", value="Update JavaAutomation to latest version in GitHub.", inline=False)
     embed.add_field(name=f"{prefix}invite", value="To join JavaAutomation server", inline=False)
     embed.set_footer(text="Developed by: Java#9999 \nHelped by: Lag#1234")
     await ctx.send(embed=embed)
