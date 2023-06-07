@@ -1210,10 +1210,6 @@ async def autorestart_task_fn(minutes: int, ctx):
 async def robloxid(ctx, new_id: int):
     global user_id
     user_id = new_id
-    
-    # Update the userID.txt file    
-    with open("userID.txt", "w") as f:
-        f.write(str(new_id))
         
     # Clear cached inventory data
     serials["inventory_data"] = []
