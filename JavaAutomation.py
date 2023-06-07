@@ -150,6 +150,7 @@ async def restart_bot(ctx):
             description=f" ``` Bot was requested restart by system. main.py has been restarted! ```",
             color=discord.Color.red()
         )
+        await ctx.send(embed=embed)
     except Exception as e:
         pass
 
