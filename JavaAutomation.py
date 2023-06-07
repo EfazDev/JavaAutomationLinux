@@ -1244,7 +1244,7 @@ async def check(ctx, cookie_type: str):
     for cookie in cookies:
         valid, username = await check_cookie(cookie)
 
-        if valid:
+        if valid == True:
             user_id = await get_user_id_from_cookie(cookie)  # Get the user ID from the cookie
             avatar_api_url = f"https://thumbnails.roblox.com/v1/users/avatar?userIds={user_id}&size=420x420&format=Png&isCircular=false"
             async with httpx.AsyncClient() as client:
