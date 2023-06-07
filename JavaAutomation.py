@@ -37,6 +37,7 @@ if whichPythonCommand() == "python3":
     os.system("clear")
     
 print("Welcome to JavaAutomation")
+print("update command test")
 print("Device Info: " + platform.system())
 
 #Load Settings
