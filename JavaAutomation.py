@@ -25,16 +25,19 @@ import importlib
 from datetime import datetime
 import threading
 
-print("Welcome to JavaAutomation")
-print("Device Info: " + platform.system())
 def whichPythonCommand():
     LocalMachineOS = platform.system()
     if LocalMachineOS == "win32" or LocalMachineOS == "win64" or LocalMachineOS == "Windows":
         print("This version of JavaAutomation is not supported with Windows. Please use the Windows version. Python Script ended")
         quit()
     else:
-        return
-whichPythonCommand()
+        return "python3"
+    
+if whichPythonCommand() == "python3":
+    os.system("clear")
+    
+print("Welcome to JavaAutomation")
+print("Device Info: " + platform.system())
 
 #Load Settings
 with open('settings.json') as f:
@@ -93,6 +96,10 @@ class MyBot(commands.AutoShardedBot):
     async def on_ready(self):
         if not hasattr(self, "_task"):
             self._task = self.loop.create_task(self.check_socket())
+
+    async def disconnectTask(self):
+        if self._task:
+            self._task.cancel()
 
     async def check_socket(self):
         while not self.is_closed():
@@ -779,6 +786,51 @@ async def owners(ctx):
 
     # Send the embed message
     await ctx.send(embed=embed)
+
+#updatejava
+@bot.command()
+@is_owner()
+async def update(ctx):
+    with open('settings.json', 'r') as file:
+        settings = json.load(file)
+    authorized_ids = settings["MISC"]["DISCORD"]["AUTHORIZED_IDS"]
+
+    # Create an embed with the specified color
+    embed = discord.Embed(
+        title="Updating JavaAutomation for latest updates...",
+        color=discord.Color.from_rgb(255, 182, 193)
+    )
+
+    # Send the embed message
+    await ctx.send(embed=embed)
+    print("Launching macOS/Linux Version...")
+    url = "https://raw.githubusercontent.com/EfazDev/JavaAutomationLinux/main/JavaAutomation.py"
+    time.sleep(2)
+    print("Locating Request from URL...")
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        print("Finished GET Request, saving script...")
+        content = resp.text
+        if os.path.exists("ExtenderRunner.py"):
+            f = open("ExtenderRunner.py", "w")
+            f.write(content)
+            print("Finished Writing Script")
+            print("Running Script...")
+            os.system("pkill -f main.py")
+            subprocess.Popen(["python3", 'ExtenderRunner.py'])
+            __builtins__.print("Finished Running, ending launcher, mewt sniper and this script...")
+            exit()
+        else:
+            f = open("JavaAutomation.py", "w")
+            f.write(content)
+            print("Finished Writing Script")
+            print("Running Script...")
+            os.system("pkill -f main.py")
+            subprocess.Popen(["python3", 'JavaAutomation.py'])
+            __builtins__.print("Finished Running, ending launcher, mewt sniper and this script...")
+            exit()
+    else:
+        print("Server returned unknown status code. Extension not runned")
 
 #restart command
 @bot.command()
