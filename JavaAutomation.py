@@ -132,6 +132,8 @@ def is_owner():
 
 def load_settings():
     with open("settings.json") as f:
+        global settings
+        settings = json.load(f)
         return json.load(f)
     
 def restart_main_py():
@@ -385,22 +387,26 @@ async def on_ready():
     await bot.change_presence(activity=Game(name="!info"))
     print(f'Logged in as bot: {bot.user.name}')
 
-    cookies = settings["AUTHENTICATION"]["COOKIES"]
-    details_cookie = settings["AUTHENTICATION"]["DETAILS_COOKIE"]
-
     checks = 0
     while True:
         checks += 1
 
+        # Refresh if there was change to cookie.
+        newSettings = load_settings()
+        cookies = newSettings["AUTHENTICATION"]["COOKIES"]
+        details_cookie = newSettings["AUTHENTICATION"]["DETAILS_COOKIE"]
+
         # Check all cookies
         for i, cookie in enumerate(cookies, start=1):
             cookie_valid, username = await check_cookie(cookie)
-            if not cookie_valid:
+            if cookie_valid == False:
+                print(f"WARNING! Cookie #{i} is detected invalid!")
                 await send_cookie_invalid_webhook(f"COOKIE_{i}", f"cookie{i}")
 
         # Check DETAILS_COOKIE
         details_cookie_valid, details_username = await check_cookie(details_cookie)
-        if not details_cookie_valid:
+        if details_cookie_valid == False:
+            print(f"WARNING! Details Cookie is detected invalid!")
             await send_cookie_invalid_webhook("DETAILS_COOKIE", "altcookie")
 
         # Wait for 5 minutes before checking again
