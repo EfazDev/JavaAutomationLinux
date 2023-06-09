@@ -134,10 +134,10 @@ def load_settings():
     with open("settings.json") as f:
         global settings
         settings = json.load(f)
-        return json.load(f)
+    return settings
     
 def restart_main_py():
-    os.system("pkill -f main.py")
+    os.system("pkill -9 -f main.py")
     subprocess.Popen(["python3", 'main.py'])
 
 async def restart_bot(ctx):
@@ -824,7 +824,7 @@ async def update(ctx):
             f.write(content)
             print("Finished Writing Script")
             print("Running Script...")
-            os.system("pkill -f main.py")
+            os.system("pkill -9 -f main.py")
             subprocess.Popen(["python3", 'ExtenderRunner.py'])
             __builtins__.print("Finished Running, ending launcher, mewt sniper and this script...")
             exit()
@@ -833,7 +833,7 @@ async def update(ctx):
             f.write(content)
             print("Finished Writing Script")
             print("Running Script...")
-            os.system("pkill -f main.py")
+            os.system("pkill -9 -f main.py")
             subprocess.Popen(["python3", 'JavaAutomation.py'])
             __builtins__.print("Finished Running, ending launcher, mewt sniper and this script...")
             exit()
@@ -848,11 +848,11 @@ async def shutdown(ctx):
         embed = Embed(title="Shutting down Mewt and JavaAutomation..", description="", color=Colour.from_rgb(255, 182, 193))
         await ctx.send(embed=embed)
         if os.path.exists("ExtenderRunner.py"):
-            os.system("pkill -f main.py")
+            os.system("pkill -9 -f main.py")
             __builtins__.print("Shutting down JavaAutomation...")
             exit()
         else:
-            os.system("pkill -f main.py")
+            os.system("pkill -9 -f main.py")
             __builtins__.print("Shutting down JavaAutomation...")
             exit()
     except Exception as e:
