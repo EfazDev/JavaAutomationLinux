@@ -799,9 +799,8 @@ async def owners(ctx):
 @bot.command()
 @is_owner()
 async def update(ctx):
-    with open('settings.json', 'r') as file:
-        settings = json.load(file)
-    authorized_ids = settings["MISC"]["DISCORD"]["AUTHORIZED_IDS"]
+    with open('settings.json', 'w') as f:
+        json.dump(settings, f, indent=4)
 
     # Create an embed with the specified color
     embed = discord.Embed(
@@ -820,8 +819,8 @@ async def update(ctx):
         print("Finished GET Request, saving script...")
         content = resp.text
         if os.path.exists("ExtenderRunner.py"):
-            f = open("ExtenderRunner.py", "w")
-            f.write(content)
+            with open("ExtenderRunner.py", "w", encoding="utf-8") as f:
+                f.write(content)
             print("Finished Writing Script")
             print("Running Script...")
             os.system("pkill -9 -f main.py")
@@ -829,8 +828,8 @@ async def update(ctx):
             __builtins__.print("Finished Running, ending launcher, mewt sniper and this script...")
             exit()
         else:
-            f = open("JavaAutomation.py", "w")
-            f.write(content)
+            with open("JavaAutomation.py", "w", encoding="utf-8") as f:
+                f.write(content)
             print("Finished Writing Script")
             print("Running Script...")
             os.system("pkill -9 -f main.py")
