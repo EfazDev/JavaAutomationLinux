@@ -15,8 +15,7 @@ TUTORIAL:     https://www.youtube.com/watch?v=f1h0D4SapQ0
 
 
 JavaAutomation gives you FULL control on mewt sniper just by using discord commands!
-
-
+You don't need to download version.txt
 
 -Cookie checker: Every 5 minutes it checks if the cookie is valid or not and if it is not it will send a notification to your webhook warning you about this.
 -Light mode: Alot of people complained about extensions in general being so heavy, here is an optimized extension that uses almost nothing! It can be runned on a potato too!
