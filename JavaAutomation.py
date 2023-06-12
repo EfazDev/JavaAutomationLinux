@@ -25,6 +25,8 @@ import importlib
 from datetime import datetime
 import threading
 
+scriptVersion = 1
+
 def whichPythonCommand():
     LocalMachineOS = platform.system()
     if LocalMachineOS == "win32" or LocalMachineOS == "win64" or LocalMachineOS == "Windows":
@@ -1285,10 +1287,48 @@ def searchinventory():
             serials["last_bought_needs_update"] = False
             serials["update_trigger"] = False
         time.sleep(0.5)
+
+def versionChecker(): 
+    while True:
+        response = requests.get("https://raw.githubusercontent.com/EfazDev/JavaAutomationLinux/main/version.txt")
+        if response:
+            response1 = response.text
+            final = int(response1)
+            if scriptVersion == final:
+                print("JavaAutomation script is on the latest version!")
+            else:
+                print("JavaAutomation has a new update! Sending webhook!")
+
+                webhook_url = settings['MISC']['WEBHOOK']['URL']
+                embed = discord.Embed(
+                    title="New version!",
+                    description=f" ``` JavaAutomation has a new update! Use !update to update your JavaAutomation! ```",
+                    color=webhook_color
+                )
+                embed_dict = embed.to_dict()
+
+                with aiohttp.ClientSession() as session:
+                    with session.post(
+                        webhook_url,
+                        json={
+                            "embeds": [embed_dict],
+                            "username": bot.user.name,
+                            "avatar_url": str(bot.user.avatar.url) if bot.user.avatar else None,
+                        },
+                    ) as response:
+                        if response.status != 204:
+                            print(f"Failed to send the embed to the webhook. HTTP status: {response.status}")
+        else:
+            print("Failed to get response for version checker, please check your internet connection.")
+        time.sleep(3600)
+
 if user_id:
     sync_inventory()
     serials_thread = threading.Thread(target=searchinventory, daemon=True)
     serials_thread.start()
+
+versionCheck = threading.Thread(target=versionChecker, daemon=True)
+versionCheck.start()
         
 
 try:
