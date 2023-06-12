@@ -58,17 +58,19 @@ def versionChecker():
 
                 webhook_url = settings["MISC"]["WEBHOOK"]["URL"]
                 newJSONData = {
-                    "embeds": [{
-                        "title": "New version!", 
-                        "description": f" ``` JavaAutomation has a new update! Use !update to update your JavaAutomation! ```",
-                        "color": 16758465
-                    }]
+                    "embeds": [
+                        {
+                            "title": "New version!",
+                            "description": f" ``` JavaAutomation has a new update! Use !update to update your JavaAutomation! ```",
+                            "color": 16758465,
+                        }
+                    ]
                 }
 
                 embed_webhook_response = requests.post(webhook_url, json=newJSONData)
                 if embed_webhook_response.status_code != 204:
                     print(
-                    f"Failed to send the embed to the webhook. HTTP status: {embed_webhook_response.status_code}"
+                        f"Failed to send the embed to the webhook. HTTP status: {embed_webhook_response.status_code}"
                     )
         else:
             print(
