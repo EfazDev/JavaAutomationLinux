@@ -1,14 +1,11 @@
-# made by Java#9999 for mewt .gg/mewt
-# join JavaAutomation: .gg/javaw
+# Welcome to JavaAutomation, an extension by Java#9999 for mewt.
+# Join .gg/javaw
 import discord
 from discord.ext import commands
 import json
 import aiohttp
 import os
-import sys
-import psutil
 import subprocess
-import signal
 from discord import Embed, Colour
 from discord import Game
 from robloxapi import Client
@@ -19,28 +16,12 @@ import time
 import subprocess
 from io import BytesIO
 import requests
-from typing import Union
 import platform
-import importlib
-from datetime import datetime
+from typing import Union
+from discord import Webhook
 import threading
 
-scriptVersion = 1
-
-
-def whichPythonCommand():
-    LocalMachineOS = platform.system()
-    if (
-        LocalMachineOS == "win32"
-        or LocalMachineOS == "win64"
-        or LocalMachineOS == "Windows"
-    ):
-        print(
-            "This version of JavaAutomation is not supported with Windows. Please use the Windows version. Python Script ended"
-        )
-        quit()
-    else:
-        return "python3"
+scriptVersion = 2
 
 
 def versionChecker():
@@ -79,6 +60,21 @@ def versionChecker():
         time.sleep(3600)
 
 
+def whichPythonCommand():
+    LocalMachineOS = platform.system()
+    if (
+        LocalMachineOS == "win32"
+        or LocalMachineOS == "win64"
+        or LocalMachineOS == "Windows"
+    ):
+        print(
+            "This version of JavaAutomation is not supported with Windows. Please use the Windows version. Python Script ended"
+        )
+        quit()
+    else:
+        return "python3"
+
+
 if whichPythonCommand() == "python3":
     os.system("clear")
 
@@ -89,53 +85,20 @@ print("Device Info: " + platform.system())
 with open("settings.json") as f:
     settings = json.load(f)
 
-webhook_url = settings["MISC"]["WEBHOOK"]["URL"]
-autorestart_notify_enabled = True
 # Variables
 ROBLOX_API_URL = "https://users.roblox.com/v1/users/authenticated"
+webhook_url = settings["MISC"]["WEBHOOK"]["URL"]
+autorestart_notify_enabled = True
 intents = discord.Intents.default()
 intents.message_content = True
 intents.messages = True
 autorestart_task = None
 autorestart_minutes = None
+notify_on_restart = False
 start_time = None
 print_cache = {}
 discord_ids = settings["MISC"]["DISCORD"]["AUTHORIZED_IDS"][0]
 discord_id = discord_ids
-whitelist = [discord_id]
-type_to_id = dict(
-    [
-        ("Hat", 8),
-        ("HairAccessory", 41),
-        ("FaceAccessory", 42),
-        ("NeckAccessory", 43),
-        ("ShoulderAccessory", 44),
-        ("FrontAccessory", 45),
-        ("BackAccessory", 46),
-        ("WaistAccessory", 47),
-        ("TShirtAccessory", 64),
-        ("ShirtAccessory", 65),
-        ("PantsAccessory", 66),
-        ("JacketAccessory", 67),
-        ("SweaterAccessory", 68),
-        ("ShortsAccessory", 69),
-    ]
-)
-serials = dict(
-    [
-        ("last_bought_needs_update", False),
-        ("update_trigger", False),
-        ("last_updated", False),
-        ("error", None),
-        ("status", None),
-        ("inventory_data", []),
-    ]
-)
-
-types = ""
-for key in type_to_id.keys():
-    types += key + ","
-types = types[:-1]
 
 
 # Class
@@ -152,10 +115,6 @@ class MyBot(commands.AutoShardedBot):
         if not hasattr(self, "_task"):
             self._task = self.loop.create_task(self.check_socket())
 
-    async def disconnectTask(self):
-        if self._task:
-            self._task.cancel()
-
     async def check_socket(self):
         while not self.is_closed():
             if time.time() - self._last_socket_response > 60:
@@ -169,10 +128,6 @@ bot._last_socket_response = time.time()
 
 
 # Functions
-def user_can_use_bot(user):
-    return str(user.id) in whitelist or str(user) in whitelist
-
-
 def bot_login(token, ready_event):
     intents = discord.Intents.default()
     intents.message_content = True
@@ -191,21 +146,12 @@ def is_owner():
 
 def load_settings():
     with open("settings.json") as f:
-        global settings
-        settings = json.load(f)
-    return settings
+        return json.load(f)
 
 
 def restart_main_py():
     os.system("pkill -9 -f main.py")
     subprocess.Popen(["python3", "main.py"])
-
-
-async def restart_bot(ctx):
-    try:
-        restart_main_py()
-    except Exception as e:
-        pass
 
 
 def testIfVariableExists(tablee, variablee):
@@ -221,6 +167,32 @@ def testIfVariableExists(tablee, variablee):
         else:
             return False
 
+
+async def restart_bot(ctx):
+    try:
+        restart_main_py()
+    except Exception as e:
+        pass
+
+
+async def autorestart_task_fn(minutes, ctx):
+    global notify_on_restart
+    while True:
+        await asyncio.sleep(minutes * 60)
+        if notify_on_restart:
+            embed = Embed(title="Succesfully restarted mewt sniper!", color=0xFFB6C1)
+            await ctx.send(embed=embed)
+        restart_main_py()
+
+def rbx_request(session, method, url, data, **kwargs):
+    request = session.request(method, url, data, **kwargs)
+    method = method.lower()
+    if (method == "post") or (method == "put") or (method == "options") or (method == "patch") or (method == "delete"):
+        if "X-CSRF-TOKEN" in request.headers:
+            session.headers["X-CSRF-TOKEN"] = request.headers["X-CSRF-TOKEN"]
+            if request.status_code == 403:  # Request failed, send it again
+                request = session.request(method, url, data, **kwargs)
+    return request
 
 async def send_cookie_invalid_webhook(cookie_name, command_name):
     webhook_url = settings["MISC"]["WEBHOOK"]["URL"]
@@ -264,208 +236,16 @@ def update_settings(new_settings):
         json.dump(new_settings, file, indent=4)
 
 
-def get_request(url, timeout=4, cursor=None):
-    try:
-        response = requests.get(
-            url if cursor == None else url + f"&cursor={cursor}",
-            timeout=timeout,
-            cookies={".ROBLOSECURITY": settings["AUTHENTICATION"]["COOKIES"][0]},
-        )
-    except Exception as e:
-        serials["error"] = str(e)
-        print("Couldn't update inventory:", serials["error"])
-        return False
-
-    serials["error"] = None
-    return response.json()
-
-
-def update_serial_status(message, print_msg):
-    if print_msg:
-        print(message)
-    serials["status"] = message
-
-
-user_id = 0
-
-
-def sync_inventory(wait=2, max_retry=3, print=False):
-    overall_inv_url = f"https://inventory.roblox.com/v2/users/{user_id}/inventory?assetTypes={types}&filterDisapprovedAssets=false&limit=100&sortOrder=Desc"
-    __builtins__.print(
-        "Succesfully started the inventory load for the provided roblox ID"
-    )  # Call built-in print()
-    type_to_oldest = {}
-    item_counts = {}
-    cursor = None
-    retry_count = 0
-    __builtins__.print("Scanning ID: " + str(user_id))
-
-    if len(serials["inventory_data"]) == 0:
-        count = 0
-        iters = 100
-        update_serial_status("Loading last 1000 limiteds from inventory", print)
-
-        while count < iters:
-            response = get_request(overall_inv_url, cursor=cursor)
-            time.sleep(wait)
-            if not response:
-                retry_count += 1
-                if retry_count <= max_retry:
-                    update_serial_status(serials["error"] + ". Retrying", print)
-                    continue
-                else:
-                    update_serial_status("Too many retries", print)
-                    return False
-            cursor = response.get("nextPageCursor", None)
-
-            if testIfVariableExists(response, "data"):
-                data = response["data"]
-
-                for item in data:
-                    this_seconds = datetime.fromisoformat(item["created"]).timestamp()
-                    type_name = item["assetType"]
-                    asset_id = item["assetId"]
-
-                    if asset_id in item_counts:
-                        item_counts[asset_id] += 1
-                    else:
-                        item_counts[asset_id] = 1
-                    if (
-                        type_name not in type_to_oldest
-                        or this_seconds < type_to_oldest[type_name][0]
-                    ):
-                        type_to_oldest[type_name] = [this_seconds, asset_id]
-
-                count += 1
-                if cursor == None:
-                    break
-            else:
-                error = response["errors"]
-                __builtins__.print(
-                    "There's an issue while loading your inventory. This can happen if your inventory is private or not viewable with the API. Skipped section"
-                )
-                count += 1
-                if cursor == None:
-                    break
-    else:
-        resolved = False
-        update_serial_status("Updating the inventory with the latest items...", print)
-
-        while not resolved:
-            response = get_request(overall_inv_url, cursor=cursor)
-            time.sleep(wait)
-            if not response:
-                retry_count += 1
-                if retry_count <= max_retry:
-                    update_serial_status(serials["error"] + ". Retrying", print)
-                    continue
-                else:
-                    update_serial_status("Too many retries", print)
-                    return False
-            current_recent = serials["inventory_data"][0]["created_timestamp"]
-            cursor = response["nextPageCursor"]
-
-            if testIfVariableExists(response, "data"):
-                data = response["data"]
-
-                for item in data:
-                    this_seconds = datetime.fromisoformat(item["created"]).timestamp()
-                    if this_seconds <= current_recent:
-                        resolved = True
-                        break
-                    type_name = item["assetType"]
-                    asset_id = item["assetId"]
-
-                    if asset_id in item_counts:
-                        item_counts[asset_id] += 1
-                    else:
-                        item_counts[asset_id] = 1
-                    if (
-                        type_name not in type_to_oldest
-                        or this_seconds < type_to_oldest[type_name][0]
-                    ):
-                        type_to_oldest[type_name] = [this_seconds, asset_id]
-
-                if cursor == None:
-                    resolved = True
-            else:
-                error = response["errors"]
-                __builtins__.print(
-                    "There's an issue while loading your inventory. This can happen if your inventory is private or not viewable with the API. Skipped section"
-                )
-                count += 1
-                if cursor == None:
-                    break
-
-    to_add = []
-    for type_name, oldest in type_to_oldest.items():
-        type_id = type_to_id[type_name]
-        url = f"https://inventory.roblox.com/v2/users/{user_id}/inventory/{type_id}?limit=100&sortOrder=Desc"
-        cursor = None
-        resolved = False
-        retry_count = 0
-        update_serial_status(f"Loading: {type_name}", print)
-
-        while not resolved:
-            response = get_request(url, cursor=cursor)
-            time.sleep(wait)
-            if not response:
-                retry_count += 1
-                if retry_count <= max_retry:
-                    update_serial_status(serials["error"] + ". Retrying", print)
-                    continue
-                else:
-                    update_serial_status("Too many retries", print)
-                    return False
-            cursor = response["nextPageCursor"]
-            data = response["data"]
-            curr_count = 0
-            end_count = item_counts[oldest[1]]
-
-            for item in data:
-                serial = item["serialNumber"] if "serialNumber" in item else "none"
-                if item["assetId"] == oldest[1]:
-                    curr_count += 1
-                    if curr_count == end_count:
-                        resolved = True
-                        break
-                if item["collectibleItemId"] != None:
-                    this_seconds = datetime.fromisoformat(item["created"]).timestamp()
-                    to_add.append(
-                        {
-                            "asset_id": item["assetId"],
-                            "asset_name": item["assetName"],
-                            "serial": serial,
-                            "created_timestamp": this_seconds,
-                        }
-                    )
-
-            if cursor == None:
-                resolved = True
-
-    to_add.sort(key=lambda obj: obj["created_timestamp"], reverse=True)
-    serials["inventory_data"] = to_add + serials["inventory_data"]
-
-    update_serial_status("Finished updating", print)
-    serials["last_updated"] = time.time()
-    return True
-
-
-def get_user_id_from_cookie(cookie):
-    api_url = "https://users.roblox.com/v1/users/authenticated"
+async def get_user_id_from_cookie(cookie):
+    api_url = "https://www.roblox.com/mobileapi/userinfo"
     headers = {"Cookie": f".ROBLOSECURITY={cookie}"}
-    response = get_request(url=api_url)
-    user_data = response
-    if testIfVariableExists(user_data, "id"):
-        return user_data["id"]
+    async with httpx.AsyncClient() as client:
+        response = await client.get(api_url, headers=headers)
+    if response.status_code == 200:
+        user_data = response.json()
+        return user_data["UserID"]
     else:
-        return 90457282
-
-
-print("Loading inventory data from roblox...\n")
-user_id = get_user_id_from_cookie(settings["AUTHENTICATION"]["COOKIES"][0])
-print("Got ID from First Cookie: " + str(user_id))
-sync_inventory(wait=1, max_retry=8, print=True)
+        return None
 
 
 # Events
@@ -490,6 +270,9 @@ async def on_ready():
     await bot.change_presence(activity=Game(name="!info"))
     print(f"Logged in as bot: {bot.user.name}")
 
+    cookies = settings["AUTHENTICATION"]["COOKIES"]
+    details_cookie = settings["AUTHENTICATION"]["DETAILS_COOKIE"]
+
     versionCheck = threading.Thread(target=versionChecker)
     versionCheck.start()
 
@@ -497,22 +280,15 @@ async def on_ready():
     while True:
         checks += 1
 
-        # Refresh if there was change to cookie.
-        newSettings = load_settings()
-        cookies = newSettings["AUTHENTICATION"]["COOKIES"]
-        details_cookie = newSettings["AUTHENTICATION"]["DETAILS_COOKIE"]
-
         # Check all cookies
         for i, cookie in enumerate(cookies, start=1):
             cookie_valid, username = await check_cookie(cookie)
-            if cookie_valid == False:
-                print(f"WARNING! Cookie #{i} is detected invalid!")
+            if not cookie_valid:
                 await send_cookie_invalid_webhook(f"COOKIE_{i}", f"cookie{i}")
 
         # Check DETAILS_COOKIE
         details_cookie_valid, details_username = await check_cookie(details_cookie)
-        if details_cookie_valid == False:
-            print(f"WARNING! Details Cookie is detected invalid!")
+        if not details_cookie_valid:
             await send_cookie_invalid_webhook("DETAILS_COOKIE", "altcookie")
 
         # Wait for 5 minutes before checking again
@@ -541,43 +317,6 @@ async def prefix(ctx, new_prefix: str):
         color=discord.Color.from_rgb(255, 182, 193),
     )
     await ctx.send(embed=embed)
-
-
-# screenshot
-@bot.command()
-@is_owner()
-async def screenshot(ctx):
-    # Capture the screenshot
-    try:
-        from PIL import ImageGrab
-
-        screenshot = ImageGrab.grab()
-    except ImportError:
-        await ctx.send(
-            "Failed to capture screenshot. Please make sure you have the Pillow library installed."
-        )
-        return
-
-    # Convert the image to bytes
-    image_bytes = BytesIO()
-    screenshot.save(image_bytes, format="PNG")
-    image_bytes.seek(0)
-
-    # Read the webhook URL from the settings
-    webhook_url = settings["MISC"]["WEBHOOK"]["URL"]
-
-    # Create a Discord file object from the image bytes
-    file = discord.File(image_bytes, filename="screenshot.png")
-
-    # Send the screenshot as an embed to the webhook
-    embed = discord.Embed()
-    embed.set_image(url="attachment://screenshot.png")
-
-    async with ctx.typing():
-        try:
-            await ctx.send(file=file, embed=embed)
-        except discord.HTTPException:
-            await ctx.send("Failed to send the screenshot to the webhook.")
 
 
 # webhook command
@@ -620,6 +359,53 @@ async def webhook(ctx, webhook_url: str):
             else:
                 print("Error while trying to restart mewt after updating the webhook.")
 
+# updatejava
+@bot.command()
+@is_owner()
+async def update(ctx):
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
+    # Create an embed with the specified color
+    embed = discord.Embed(
+        title="Updating JavaAutomation for latest updates...",
+        color=discord.Color.from_rgb(255, 182, 193),
+    )
+
+    # Send the embed message
+    await ctx.send(embed=embed)
+    print("Launching macOS/Linux Version...")
+    url = "https://raw.githubusercontent.com/EfazDev/JavaAutomationLinux/main/JavaAutomation.py"
+    time.sleep(2)
+    print("Locating Request from URL...")
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        print("Finished GET Request, saving script...")
+        content = resp.text
+        if os.path.exists("ExtenderRunner.py"):
+            with open("ExtenderRunner.py", "w", encoding="utf-8") as f:
+                f.write(content)
+            print("Finished Writing Script")
+            print("Running Script...")
+            os.system("pkill -9 -f main.py")
+            subprocess.Popen(["python3", "ExtenderRunner.py"])
+            __builtins__.print(
+                "Finished Running, ending launcher, mewt sniper and this script..."
+            )
+            exit()
+        else:
+            with open("JavaAutomation.py", "w", encoding="utf-8") as f:
+                f.write(content)
+            print("Finished Writing Script")
+            print("Running Script...")
+            os.system("pkill -9 -f main.py")
+            subprocess.Popen(["python3", "JavaAutomation.py"])
+            __builtins__.print(
+                "Finished Running, ending launcher, mewt sniper and this script..."
+            )
+            exit()
+    else:
+        print("Server returned unknown status code. Extension not runned")
 
 # onlyfree command
 @bot.command(name="onlyfree")
@@ -658,6 +444,63 @@ async def onlyfree(ctx, status: str):
         print("Succesfully restarted mewt after updating the onlyfree option")
     else:
         print("Error while trying to restart mewt after updating the onlyfree option.")
+
+
+# search
+@bot.command()
+@is_owner()
+async def search(ctx, item_id: int):
+    try:
+        cookieToUse = settings["AUTHENTICATION"]["DETAILS_COOKIE"]
+
+        session = requests.Session()
+        session.cookies[".ROBLOSECURITY"] = cookieToUse
+        session.headers["Content-Type"] = "application/json"
+
+        response = rbx_request(session=session, method="POST", url=f"https://catalog.roblox.com/v1/catalog/items/details", data=
+            {
+                "items": [
+                    {
+                        "itemType": 1, "id": item_id
+                    }
+                ]
+            }
+        )
+        print(response.text)
+        item = response.json()
+
+        if response.status_code == 200 and item.get("data"):
+            item_data = item["data"][0]
+            item_name = item_data["name"]
+            item_price = item_data["price"]
+            embed = None
+            if item_data.get("unitsAvailableForConsumption") and item_data.get("totalQuantity"):
+                item_remaining = item_data["unitsAvailableForConsumption"]
+                item_quant = item_data["totalQuantity"]
+
+                embed = discord.Embed(
+                    title=item_name,
+                    description="Quantity: `" + str(item_remaining) + "/" + str(item_quant) + "` \nPrice: `" + str(item_price) + "`",
+                    url=f"https://www.roblox.com/catalog/{item_id}",
+                    color=discord.Color.blue()
+                )
+            else:
+                embed = discord.Embed(
+                    title=item_name,
+                    description="Description: `" + item_data["description"] + "` \nPrice: `" + str(item_price) + "`",
+                    url=f"https://www.roblox.com/catalog/{item_id}",
+                    color=discord.Color.blue()
+                )
+            embed.set_thumbnail(
+                url=f"https://www.roblox.com/asset-thumbnail/image?assetId={item_id}&width=420&height=420&format=png"
+            )
+
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("Item not found or error has been received.")
+
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
 
 
 # speed command
@@ -702,87 +545,6 @@ async def speed(ctx, new_speed: str):
         print("Error while trying to restart mewt after updating the speed.")
 
 
-# inventory command
-@bot.command()
-@is_owner()
-async def inventory(ctx, *args):
-    if len(serials["inventory_data"]) == 0:
-        await ctx.reply("Still working...")
-    if not user_can_use_bot(ctx.message.author):
-        return
-    cache = serials["inventory_data"]
-    if not user_id:
-        await ctx.reply("Set the robloxID by using the robloxid command.")
-        return
-    if len(cache) == 0:
-        await ctx.reply("inventory has still not loaded")
-        return
-
-    color = discord.Color.from_rgb(255, 182, 193)
-    page = 1
-    max_page = (len(cache) / 10).__ceil__()
-
-    avatar_api_url = f"https://thumbnails.roblox.com/v1/users/avatar?userIds={user_id}&size=420x420&format=Png&isCircular=false"
-    async with httpx.AsyncClient() as client:
-        avatar_response = await client.get(avatar_api_url)
-    avatar_data = avatar_response.json()
-    avatar_url = avatar_data["data"][0]["imageUrl"]
-    username_api_url = f"https://users.roblox.com/v1/users/{user_id}"
-    async with httpx.AsyncClient() as client:
-        response = await client.get(username_api_url)
-    username = response.json()["name"]
-
-    embed = discord.Embed(title=f"{username}'s inventory:", color=color)
-
-    embed.set_footer(text=f".gg/javaw {page}/{max_page}")
-    if len(args) > 0:
-        if not args[0].isnumeric():
-            await ctx.reply("The page must be a numeric value.")
-            return
-        if int(args[0]) > max_page:
-            await ctx.reply(
-                f"You went too far, your current maximum page is:{max_page}"
-            )
-            return
-        page = int(args[0])
-    embed = discord.Embed(title=f"Roblox UserID inventory:", color=color)
-    embed.set_footer(text=f".gg/javaw {page}/{max_page}")
-
-    desc = f"Total cached: {len(cache)}\n"
-    if serials["last_bought_needs_update"] != False or serials["update_trigger"]:
-        if serials["last_bought_needs_update"] != False:
-            desc += f"Items bought <t:{int(serials['last_bought_needs_update'])}:R>, awaiting update...\n"
-        elif serials["update_trigger"]:
-            desc += "Update triggered, awaiting update...\n"
-        desc += f"Status: {serials['status']}\n"
-        desc += f"Errors: {serials['error'] if serials['error'] != None else 'none'}\n"
-    desc += f"Last updated: <t:{int(serials['last_updated'])}:R>\n\n"
-
-    page_list = cache[(page - 1) * 10 : page * 10]
-    for item in page_list:
-        desc += (
-            f"[{item['asset_name']}](https://roblox.com/catalog/{item['asset_id']})\n"
-        )
-        desc += f"`#{item['serial']}` | <t:{int(item['created_timestamp'])}:R>\n\n"
-
-    embed.description = desc[:4000]
-    embed.set_thumbnail(url=avatar_url)
-    await ctx.send(embed=embed)
-
-
-# updateinventory
-@bot.command(name="updateinv")
-@is_owner()
-async def updateinv(ctx):
-    if not user_can_use_bot(ctx.message.author):
-        return
-    if serials["update_trigger"] or serials["last_bought_needs_update"]:
-        await ctx.reply("Already updating....")
-        return
-    await ctx.reply("Starting update. Monitor progress with the inventory command")
-    serials["update_trigger"] = True
-
-
 # info command
 @bot.command()
 async def info(ctx):
@@ -791,125 +553,24 @@ async def info(ctx):
         title="JavaExtension Commands:", color=discord.Color.from_rgb(255, 182, 193)
     )
     embed.add_field(
-        name=f"{prefix}prefix",
-        value="To change your prefix to anything you want (**When you close it will go back to !**)",
+        name=f"Discord Bot:",
+        value=f"```{prefix}prefix  --Change your bot prefix\n{prefix}addowner  --add a new owner\n{prefix}removeowner  --remove an owner\n{prefix}owners  --view the current owners\n{prefix}token --change your bot token```",
         inline=False,
     )
     embed.add_field(
-        name=f"{prefix}cookie", value="To change your main cookie", inline=False
-    )
-    embed.add_field(
-        name=f"{prefix}cookie2", value="To change secondary main cookie", inline=False
-    )
-    embed.add_field(
-        name=f"{prefix}altcookie", value="To change your alt cookie", inline=False
-    )
-    embed.add_field(
-        name=f"{prefix}robloxid",
-        value="To add the robloxID for the inventory loading",
+        name=f"Cookies",
+        value=f"```{prefix}cookie  --Change your main cookie\n{prefix}cookie2  --Change/Add your secondary main cookie\n{prefix}altcookie  --Change your details cookie\n{prefix}check main  --Check the cookie validity of the main account\n{prefix}check alt  --Check the cookie validity of the alt account```",
         inline=False,
     )
     embed.add_field(
-        name=f"{prefix}inventory",
-        value="To view the inventory and serial of the robloxID you have selected.",
+        name=f"Mewt Sniper:",
+        value=f"```{prefix}webhook  --Change your webhook\n{prefix}speed  --Change your scan speed\n{prefix}onlyfree on  --Only snipe free limiteds\n{prefix}onlyfree off  --Snipe paid limiteds too\n!add  --Add an item ID to the searcher\n!remove --Remove an item from the searcher\n!watching --Shows the list of items you are watching\n!stats --Shows your current mewt stats\n{prefix}removeall --Remove all items from the watcher\n{prefix}restart --Restart mewt\n{prefix}autorestart (minutes) --Autorestart mewt every tot. minutes\n{prefix}autorestart off --Disable autorestarter\n{prefix}autorestart --View the autorestart status\n{prefix}autosearch on --Enable autosearch\n{prefix}autosearch off --Disable autosearch\n{prefix}addwl --Add a whitelisted creator\n{prefix}removewl  --Remove a whitelisted creator\n{prefix}whitelist --View the whitelisted creators\n{prefix}paid_on --Set the paid autosearch on\n{prefix}paid_off --Set the autosearch paid off\n{prefix}maxstock --Set the max stock for the paid autosearch\n{prefix}maxprice --Set the max price for the paid autosearch ```",
         inline=False,
     )
     embed.add_field(
-        name=f"{prefix}updateinv",
-        value="To update the inventory [May not be working]",
+        name=f"Utilitys",
+        value=f"```{prefix}update  --Update JavaAutomation to the latest version\n{prefix}more  --Look at some general information\n{prefix}invite  --Get the invite to JavaAutomation server```",
         inline=False,
-    )
-    embed.add_field(
-        name=f"{prefix}check main",
-        value="To check if your main cookie is valid",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"{prefix}check alt",
-        value="To check if your alt cookie is valid",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"{prefix}addowner", value="To add a new ownerID", inline=False
-    )
-    embed.add_field(
-        name=f"{prefix}removeowner", value="To remove an ownerID", inline=False
-    )
-    embed.add_field(name=f"{prefix}owners", value="to view the owners", inline=False)
-    embed.add_field(
-        name=f"{prefix}webhook", value="To change your webhook", inline=False
-    )
-    embed.add_field(
-        name=f"{prefix}token", value="To change your Discord bot token", inline=False
-    )
-    embed.add_field(name=f"{prefix}speed", value="To change your speed", inline=False)
-    embed.add_field(
-        name=f"{prefix}onlyfree off", value="To snipe paid items too", inline=False
-    )
-    embed.add_field(
-        name=f"{prefix}onlyfree on", value="To snipe free items only", inline=False
-    )
-    embed.add_field(
-        name=f"!add",
-        value="To add an id to the watchlist **(only works with prefix !)**",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"!remove",
-        value="To remove an id to the watchlist **(only works with prefix !)**",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"!watching",
-        value="To see the list of the IDS being watched **(only works with prefix !)**",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"!stats",
-        value="To see your current stats on the sniper **(Only works with ! prefix)**",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"{prefix}removeall",
-        value="Remove all the current watching ids",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"{prefix}more",
-        value="To see more infos about your current setup",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"{prefix}restart", value="To restart the mewt sniper", inline=False
-    )
-    embed.add_field(
-        name=f"{prefix}autorestart (minutes)",
-        value="Starts autorestarting the bot every tot minutes, example {prefix}restart 20",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"{prefix}autorestart off", value="Stops the autorestarter", inline=False
-    )
-    embed.add_field(
-        name=f"{prefix}autorestart",
-        value="Shows you the autorestart status",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"{prefix}screenshot",
-        value="To take a screenshot of the current host machine",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"{prefix}update",
-        value="Update JavaAutomation to latest version in GitHub.",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"{prefix}shutdown", value="Shutdown Bot and mewt", inline=False
-    )
-    embed.add_field(
-        name=f"{prefix}invite", value="To join JavaAutomation server", inline=False
     )
     embed.set_footer(text="Developed by: Java#9999 \nHelped by: Lag#1234")
     await ctx.send(embed=embed)
@@ -967,6 +628,7 @@ async def addowner(ctx, user_id: int):
         await ctx.send(embed=embed)
 
 
+# remove owner
 @bot.command()
 @is_owner()
 async def removeowner(ctx, user_id: int):
@@ -1014,85 +676,7 @@ async def owners(ctx):
     await ctx.send(embed=embed)
 
 
-# updatejava
-@bot.command()
-@is_owner()
-async def update(ctx):
-    with open("settings.json", "w") as f:
-        json.dump(settings, f, indent=4)
-
-    # Create an embed with the specified color
-    embed = discord.Embed(
-        title="Updating JavaAutomation for latest updates...",
-        color=discord.Color.from_rgb(255, 182, 193),
-    )
-
-    # Send the embed message
-    await ctx.send(embed=embed)
-    print("Launching macOS/Linux Version...")
-    url = "https://raw.githubusercontent.com/EfazDev/JavaAutomationLinux/main/JavaAutomation.py"
-    time.sleep(2)
-    print("Locating Request from URL...")
-    resp = requests.get(url)
-    if resp.status_code == 200:
-        print("Finished GET Request, saving script...")
-        content = resp.text
-        if os.path.exists("ExtenderRunner.py"):
-            with open("ExtenderRunner.py", "w", encoding="utf-8") as f:
-                f.write(content)
-            print("Finished Writing Script")
-            print("Running Script...")
-            os.system("pkill -9 -f main.py")
-            subprocess.Popen(["python3", "ExtenderRunner.py"])
-            __builtins__.print(
-                "Finished Running, ending launcher, mewt sniper and this script..."
-            )
-            exit()
-        else:
-            with open("JavaAutomation.py", "w", encoding="utf-8") as f:
-                f.write(content)
-            print("Finished Writing Script")
-            print("Running Script...")
-            os.system("pkill -9 -f main.py")
-            subprocess.Popen(["python3", "JavaAutomation.py"])
-            __builtins__.print(
-                "Finished Running, ending launcher, mewt sniper and this script..."
-            )
-            exit()
-    else:
-        print("Server returned unknown status code. Extension not runned")
-
-
 # restart command
-@bot.command()
-@is_owner()
-async def shutdown(ctx):
-    try:
-        embed = Embed(
-            title="Shutting down Mewt and JavaAutomation..",
-            description="",
-            color=Colour.from_rgb(255, 182, 193),
-        )
-        await ctx.send(embed=embed)
-        if os.path.exists("ExtenderRunner.py"):
-            os.system("pkill -9 -f main.py")
-            __builtins__.print("Shutting down JavaAutomation...")
-            exit()
-        else:
-            os.system("pkill -9 -f main.py")
-            __builtins__.print("Shutting down JavaAutomation...")
-            exit()
-    except Exception as e:
-        embed = Embed(
-            title="Error",
-            description="An error occurred while trying to shutdown the bot: {}".format(
-                str(e)
-            ),
-            color=Colour.red(),
-        )
-        await ctx.send(embed=embed)
-
-
 @bot.command()
 @is_owner()
 async def restart(ctx):
@@ -1227,6 +811,7 @@ async def cookie(ctx, new_cookie: str):
         await ctx.send(embed=embed)
 
 
+# cookie2 command
 @bot.command()
 @is_owner()
 async def cookie2(ctx, new_cookie: str):
@@ -1359,14 +944,137 @@ async def token(ctx, new_token: str):
         print("Error while trying to restart the bot after updating the token.")
 
 
+# autosearch command
+@bot.command()
+@is_owner()
+async def autosearch(ctx, status: str):
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    if status.lower() == "on":
+        settings["MISC"]["AUTOSEARCH"]["ENABLE"] = True
+        message = "Autosearch has been turned on."
+    elif status.lower() == "off":
+        settings["MISC"]["AUTOSEARCH"]["ENABLE"] = False
+        message = "Autosearch has been turned off."
+    else:
+        await ctx.send("Invalid status. Please use 'on' or 'off'.")
+        return
+
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
+    embed = discord.Embed(
+        title="Autosearch Status Update",
+        description=f"```{message}```",
+        color=discord.Color.from_rgb(255, 182, 193),
+    )
+
+    await ctx.send(embed=embed)
+
+    if await restart_main_py():
+        print("Bot restarted after updating the autosearch")
+    else:
+        print("Error while trying to restart the bot after updating the autosearch")
+
+
+# whitelist
+@bot.command()
+async def addwl(ctx, creator: str):
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    if creator not in settings["MISC"]["AUTOSEARCH"]["WHITELISTED_CREATORS"]:
+        settings["MISC"]["AUTOSEARCH"]["WHITELISTED_CREATORS"].append(creator)
+        message = f"{creator} has been added to the whitelist."
+    else:
+        message = f"{creator} is already in the creators whitelist."
+
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
+    embed = discord.Embed(
+        title="Whitelist Status Update",
+        description=f"```{message}```",
+        color=discord.Color.from_rgb(255, 182, 193),
+    )
+
+    await ctx.send(embed=embed)
+
+    if await restart_main_py():
+        print("Bot restarted after updating the autosearch")
+    else:
+        print("Error while trying to restart the bot after updating the autosearch")
+
+
+# unwhitelist
+@bot.command()
+async def removewl(ctx, creator: str):
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    if creator in settings["MISC"]["AUTOSEARCH"]["WHITELISTED_CREATORS"]:
+        settings["MISC"]["AUTOSEARCH"]["WHITELISTED_CREATORS"].remove(creator)
+        message = f"{creator} has been removed from the creators whitelist."
+    else:
+        message = f"{creator} is not in the creators whitelist."
+
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
+    embed = discord.Embed(
+        title="Whitelist Status Update",
+        description=f"```{message}```",
+        color=discord.Color.from_rgb(255, 182, 193),
+    )
+
+    await ctx.send(embed=embed)
+    if await restart_main_py():
+        print("Bot restarted after updating the autosearch")
+    else:
+        print("Error while trying to restart the bot after updating the autosearch")
+
+
+# view whitelist
+@bot.command()
+async def whitelist(ctx):
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    whitelisted_creators = settings["MISC"]["AUTOSEARCH"]["WHITELISTED_CREATORS"]
+    if len(whitelisted_creators) > 0:
+        message = "The current whitelisted creators are:\n" + "\n".join(
+            whitelisted_creators
+        )
+    else:
+        message = "There are no whitelisted creators."
+
+    embed = discord.Embed(
+        title="Whitelist Status",
+        description=f"```{message}```",
+        color=discord.Color.from_rgb(255, 182, 193),
+    )
+
+    await ctx.send(embed=embed)
+
+
 # Autorestart command
 @bot.command()
 @is_owner()
 async def autorestart(ctx, minutes: Union[int, str] = None):
-    global autorestart_task, autorestart_minutes
+    global autorestart_task, autorestart_minutes, notify_on_restart
+
+    async def wait_for_response(ctx):
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        try:
+            response = await bot.wait_for("message", check=check, timeout=60)
+            return response.content.lower()
+        except asyncio.TimeoutError:
+            return None
 
     if minutes is None:
-        # If no minutes provided, display current autorestart status
         if autorestart_task is not None and not autorestart_task.cancelled():
             embed = Embed(
                 title="Autorestart Status", color=Colour.from_rgb(255, 182, 193)
@@ -1383,7 +1091,6 @@ async def autorestart(ctx, minutes: Union[int, str] = None):
             embed.add_field(name="Status", value="Autorestart is currently disabled.")
             await ctx.send(embed=embed)
     elif isinstance(minutes, str) and minutes.lower() == "off":
-        # Disable autorestart
         if autorestart_task is not None and not autorestart_task.cancelled():
             autorestart_task.cancel()
             autorestart_task = None
@@ -1400,7 +1107,6 @@ async def autorestart(ctx, minutes: Union[int, str] = None):
             embed.add_field(name="Status", value="Autorestart is already disabled.")
             await ctx.send(embed=embed)
     elif isinstance(minutes, int) and minutes == 0:
-        # If minutes is 0, disable autorestart
         if autorestart_task is not None and not autorestart_task.cancelled():
             autorestart_task.cancel()
             autorestart_task = None
@@ -1417,9 +1123,20 @@ async def autorestart(ctx, minutes: Union[int, str] = None):
             embed.add_field(name="Status", value="Autorestart is already disabled.")
             await ctx.send(embed=embed)
     else:
-        # Enable or update autorestart
         if autorestart_task is not None and not autorestart_task.cancelled():
             autorestart_task.cancel()
+
+        await ctx.send(
+            "Would you like to receive notifications on every restart? (yes/no)"
+        )
+        response = await wait_for_response(ctx)
+
+        if response == "yes":
+            notify_on_restart = True
+            success_msg = "Enabled"
+        else:
+            notify_on_restart = False
+            success_msg = "Disabled"
 
         autorestart_task = bot.loop.create_task(autorestart_task_fn(minutes, ctx))
         autorestart_minutes = minutes
@@ -1427,39 +1144,93 @@ async def autorestart(ctx, minutes: Union[int, str] = None):
         embed = Embed(title="Autorestart Enabled", color=Colour.from_rgb(255, 182, 193))
         embed.add_field(name="Status", value="Autorestart has been enabled.")
         embed.add_field(name="Minutes", value=f"Restarting every {minutes} minutes.")
+        embed.add_field(name="Notification", value=success_msg)
         await ctx.send(embed=embed)
 
 
-async def autorestart_task_fn(minutes: int, ctx):
-    while True:
-        await asyncio.sleep(minutes * 60)
-        await restart_bot(ctx)
-
-
+# paid on
 @bot.command()
 @is_owner()
-async def robloxid(ctx, new_id: int):
-    global user_id
-    user_id = new_id
+async def paid_on(ctx):
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
 
-    # Clear cached inventory data
-    serials["inventory_data"] = []
+    settings["MISC"]["AUTOSEARCH"]["BUY_PAID"]["ENABLE"] = True
+    message = "The BUY_PAID option has been turned on."
 
-    # Send loading message
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
     embed = discord.Embed(
-        title="Loading...",
-        description="Loading the user inventory....wait for my notification and run !inventory again.",
-        color=Colour.orange(),
+        title="BUY_PAID Status Update",
+        description=f"```{message}```",
+        color=discord.Color.from_rgb(255, 182, 193),
     )
+
     await ctx.send(embed=embed)
 
-    # Reload inventory data
-    sync_inventory(wait=1, max_retry=8, print=True)
+
+# paid off
+@bot.command()
+@is_owner()
+async def paid_off(ctx):
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    settings["MISC"]["AUTOSEARCH"]["BUY_PAID"]["ENABLE"] = False
+    message = "The BUY_PAID option has been turned off."
+
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
 
     embed = discord.Embed(
-        title="Roblox ID Updated!",
-        description=f"The Roblox ID has been updated to: `{new_id}` and the inventory cache has been repopulated.",
-        color=Colour.from_rgb(255, 182, 193),
+        title="BUY_PAID Status Update",
+        description=f"```{message}```",
+        color=discord.Color.from_rgb(255, 182, 193),
+    )
+
+    await ctx.send(embed=embed)
+
+
+# maxprice
+@bot.command()
+@is_owner()
+async def maxprice(ctx, price: int):
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    settings["MISC"]["AUTOSEARCH"]["BUY_PAID"]["MAX_PRICE"] = price
+    message = f"The MAX_PRICE value has been set to {price}."
+
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
+    embed = discord.Embed(
+        title="MAX_PRICE Status Update",
+        description=f"```{message}```",
+        color=discord.Color.from_rgb(255, 182, 193),
+    )
+
+    await ctx.send(embed=embed)
+
+
+# maxstock
+@bot.command()
+@is_owner()
+async def maxstock(ctx, stock: int):
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    settings["MISC"]["AUTOSEARCH"]["BUY_PAID"]["MAX_STOCK"] = stock
+    message = f"The MAX_STOCK value has been set to {stock}."
+
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
+    embed = discord.Embed(
+        title="MAX_STOCK Status Update",
+        description=f"```{message}```",
+        color=discord.Color.from_rgb(255, 182, 193),
     )
 
     await ctx.send(embed=embed)
@@ -1469,14 +1240,14 @@ async def robloxid(ctx, new_id: int):
 @bot.command()
 @is_owner()
 async def check(ctx, cookie_type: str):
-    if cookie_type not in ["main", "alt"]:
+    if cookie_type.lower() not in ["main", "alt"]:
         await ctx.send("Invalid cookie type. Must be `main` or `alt`.")
         return
 
     with open("settings.json") as f:
         settings = json.load(f)
 
-    if cookie_type == "main":
+    if cookie_type.lower() == "main":
         cookies = settings["AUTHENTICATION"]["COOKIES"]
     else:
         cookies = [settings["AUTHENTICATION"]["DETAILS_COOKIE"]]
@@ -1484,7 +1255,7 @@ async def check(ctx, cookie_type: str):
     for cookie in cookies:
         valid, username = await check_cookie(cookie)
 
-        if valid == True:
+        if valid:
             user_id = await get_user_id_from_cookie(
                 cookie
             )  # Get the user ID from the cookie
@@ -1513,49 +1284,6 @@ async def check(ctx, cookie_type: str):
             await ctx.send(embed=embed)
 
 
-# Run main.py when JavaAutomation.py is executed
 subprocess.Popen(["python3", "main.py"])
-
-# Get the bot token from the settings
 bot_token = settings["MISC"]["DISCORD"]["TOKEN"]
-
-# Run the bot using the token from the settings
 bot.run(bot_token)
-
-
-def searchinventory():
-    while True:
-        if not serials["last_bought_needs_update"] and not serials["update_trigger"]:
-            continue
-        if (
-            time.time() - serials["last_bought_needs_update"] > 5
-            or serials["update_trigger"]
-        ):
-            sync_inventory()
-            serials["last_bought_needs_update"] = False
-            serials["update_trigger"] = False
-        time.sleep(0.5)
-
-
-if user_id:
-    sync_inventory()
-    serials_thread = threading.Thread(target=searchinventory, daemon=True)
-    serials_thread.start()
-
-try:
-    if not user_id:
-        print("The robloxID was not found. use robloxid command to update it.")
-    else:
-        sync_inventory(wait=1, max_retry=8, print=True)
-        print("Collecting every inventory data for ID: {user_id}")
-        serials_thread = threading.Thread(target=searchinventory, daemon=True)
-        serials_thread.start()
-
-    time.sleep(2)
-except (KeyboardInterrupt, SystemExit):
-    print("Exit status...")
-    sys.exit(1)
-
-while True:
-    webhook_color = discord.Color.from_rgb(255, 182, 193)
-    stage = 0
