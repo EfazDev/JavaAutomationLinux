@@ -184,14 +184,14 @@ async def autorestart_task_fn(minutes, ctx):
             await ctx.send(embed=embed)
         restart_main_py()
 
-def rbx_request(session, method, url, data, **kwargs):
-    request = session.request(method, url, data, **kwargs)
+def rbx_request(session, method, url, **kwargs):
+    request = session.request(method, url, **kwargs)
     method = method.lower()
-    if (method == "post") or (method == "put") or (method == "options") or (method == "patch") or (method == "delete"):
+    if (method == "post") or (method == "put") or (method == "patch") or (method == "delete"):
         if "X-CSRF-TOKEN" in request.headers:
             session.headers["X-CSRF-TOKEN"] = request.headers["X-CSRF-TOKEN"]
             if request.status_code == 403:  # Request failed, send it again
-                request = session.request(method, url, data, **kwargs)
+                request = session.request(method, url, **kwargs)
     return request
 
 async def send_cookie_invalid_webhook(cookie_name, command_name):
@@ -455,53 +455,62 @@ async def search(ctx, item_id: int):
 
         session = requests.Session()
         session.cookies[".ROBLOSECURITY"] = cookieToUse
+        session.headers["accept"] = "application/json"
         session.headers["Content-Type"] = "application/json"
 
-        response = rbx_request(session=session, method="POST", url=f"https://catalog.roblox.com/v1/catalog/items/details", data=
-            {
-                "items": [
-                    {
-                        "itemType": 1, "id": item_id
-                    }
-                ]
-            }
-        )
-        print(response.text)
+        response = rbx_request(session=session, method="POST", url="https://catalog.roblox.com/v1/catalog/items/details", data='{"items": [{"itemType": 1,"id": ' + str(item_id) + '}]}')
         item = response.json()
 
         if response.status_code == 200 and item.get("data"):
             item_data = item["data"][0]
             item_name = item_data["name"]
-            item_price = item_data["price"]
             embed = None
-            if item_data.get("unitsAvailableForConsumption") and item_data.get("totalQuantity"):
+            if testIfVariableExists(item_data, "unitsAvailableForConsumption") and testIfVariableExists(item_data, "totalQuantity"):
                 item_remaining = item_data["unitsAvailableForConsumption"]
                 item_quant = item_data["totalQuantity"]
+                item_price = item_data["price"]
 
                 embed = discord.Embed(
                     title=item_name,
-                    description="Quantity: `" + str(item_remaining) + "/" + str(item_quant) + "` \nPrice: `" + str(item_price) + "`",
+                    description="Description: `" + item_data["description"] + "` \nQuantity: `" + str(item_remaining) + "/" + str(item_quant) + "` \nPrice: `" + str(item_price) + "` \nCreator: `" + item_data["creatorName"] + "`",
                     url=f"https://www.roblox.com/catalog/{item_id}",
-                    color=discord.Color.blue()
+                    color=discord.Color.from_rgb(255, 182, 193)
                 )
             else:
-                embed = discord.Embed(
-                    title=item_name,
-                    description="Description: `" + item_data["description"] + "` \nPrice: `" + str(item_price) + "`",
-                    url=f"https://www.roblox.com/catalog/{item_id}",
-                    color=discord.Color.blue()
-                )
+                if testIfVariableExists(item_data, "price"):
+                    item_price = item_data["price"]
+                    embed = discord.Embed(
+                        title=item_name,
+                        description="Description: `" + item_data["description"] + "` \nPrice: `" + str(item_price) + "` \nCreator: `" + item_data["creatorName"] + "`",
+                        url=f"https://www.roblox.com/catalog/{item_id}",
+                        color=discord.Color.from_rgb(255, 182, 193)
+                    )
+                else:
+                    embed = discord.Embed(
+                        title=item_name,
+                        description="Description: `" + item_data["description"] + "` \nPrice: `Not on sale` \nCreator: `" + item_data["creatorName"] + "`",
+                        url=f"https://www.roblox.com/catalog/{item_id}",
+                        color=discord.Color.from_rgb(255, 182, 193)
+                    )
+
+            thumbnailRes = session.get("https://thumbnails.roblox.com/v1/assets?assetIds=" + str(item_id) + "&returnPolicy=PlaceHolder&size=420x420&format=Png&isCircular=false")
+            thumbnailRes = thumbnailRes.json()
             embed.set_thumbnail(
-                url=f"https://www.roblox.com/asset-thumbnail/image?assetId={item_id}&width=420&height=420&format=png"
+                url=thumbnailRes["data"][0]["imageUrl"]
             )
 
             await ctx.send(embed=embed)
         else:
-            await ctx.send("Item not found or error has been received.")
+            await ctx.send("Item not found or error has been received: " + item["errors"][0]["message"])
 
     except Exception as e:
         await ctx.send(f"Error: {e}")
 
+
+@bot.command(name="ping")
+async def ping(ctx):
+    message = f"Pong! {round(bot.latency * 1000)}ms"
+    await ctx.send(message)
 
 # speed command
 @bot.command(name="speed")
