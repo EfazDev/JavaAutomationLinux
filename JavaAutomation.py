@@ -21,13 +21,13 @@ from typing import Union
 from discord import Webhook
 import threading
 
-scriptVersion = 2
+scriptVersion = 5
 
 
 def versionChecker():
     while True:
         response = requests.get(
-            "https://raw.githubusercontent.com/EfazDev/JavaAutomationLinux/main/version.txt"
+            "https://raw.githubusercontent.com/IlyasCodes/JavaAutomationExtensionVersionHandle/main/version.txt"
         )
         if response:
             response1 = response.text
