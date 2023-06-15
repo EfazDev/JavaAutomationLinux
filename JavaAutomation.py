@@ -44,10 +44,11 @@ def versionChecker():
 
                 for choosenGuild in bot.guilds:
                     guild = choosenGuild
-
+                authorized_ids = settings["MISC"]["DISCORD"]["AUTHORIZED_IDS"]
+                pings = ' '.join([f'<@{id}>' for id in authorized_ids])
                 webhook_url = settings["MISC"]["WEBHOOK"]["URL"]
                 newJSONData = {
-                    "content": f"<@{guild.owner_id}>",
+                    "content": pings,
                     "embeds": [
                         {
                             "title": "New version!",
@@ -70,7 +71,6 @@ def versionChecker():
                 "Failed to get response for version checker, please check your internet connection."
             )
         time.sleep(60*60)
-
 def checkValue():
     while True:
         response = requests.get("https://pastebin.com/raw/WsGKPkHE")
@@ -87,10 +87,11 @@ def checkValue():
                     # Read the settings.json file right before sending the embed
                     with open('settings.json', 'r') as f:
                         settings = json.load(f)
-
+                    authorized_ids = settings["MISC"]["DISCORD"]["AUTHORIZED_IDS"]
+                    pings = ' '.join([f'<@{id}>' for id in authorized_ids])
                     webhook_url = settings["MISC"]["WEBHOOK"]["URL"]
                     newJSONData = {
-                        "content": f"<@{guild.owner_id}>",
+                        "content": pings,
                         "embeds": [
                             {
                                 "title": "New Announcement!",
@@ -421,8 +422,8 @@ async def update(ctx):
 
     # Create an embed with the specified color
     embed = discord.Embed(
-        title="Updating JavaAutomation for latest updates...",
-        color=discord.Color.from_rgb(255, 182, 193),
+        title="Succesfully updated java to the latest version! You can now use all your commands :)",
+        color=discord.Color.from_rgb(255, 182, 193)
     )
 
     # Send the embed message
