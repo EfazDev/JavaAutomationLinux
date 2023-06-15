@@ -21,7 +21,7 @@ from typing import Union
 from discord import Webhook
 import threading
 
-scriptVersion = 6
+scriptVersion = 7
 
 def versionChecker():
     while True:
@@ -40,9 +40,14 @@ def versionChecker():
                 with open('settings.json', 'r') as f:
                     settings = json.load(f)
 
+                guild = None
+
+                for choosenGuild in bot.guilds:
+                    guild = choosenGuild
+
                 webhook_url = settings["MISC"]["WEBHOOK"]["URL"]
                 newJSONData = {
-                    "content": "@everyone",
+                    "content": f"<@{guild.owner_id}>",
                     "embeds": [
                         {
                             "title": "New version!",
@@ -74,6 +79,10 @@ def checkValue():
                 message_response = requests.get("https://pastebin.com/raw/NDRT0tAM")
                 if message_response:
                     message = message_response.text
+                    guild = None
+
+                    for choosenGuild in bot.guilds:
+                        guild = choosenGuild
 
                     # Read the settings.json file right before sending the embed
                     with open('settings.json', 'r') as f:
@@ -81,7 +90,7 @@ def checkValue():
 
                     webhook_url = settings["MISC"]["WEBHOOK"]["URL"]
                     newJSONData = {
-                        "content": "@everyone",
+                        "content": f"<@{guild.owner_id}>",
                         "embeds": [
                             {
                                 "title": "New Announcement!",
@@ -171,6 +180,7 @@ bot._last_socket_response = time.time()
 def bot_login(token, ready_event):
     intents = discord.Intents.default()
     intents.message_content = True
+    intents.members = True
     bot = commands.Bot(command_prefix="!", intents=intents)
 
 
