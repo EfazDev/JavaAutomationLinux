@@ -1227,6 +1227,15 @@ async def autorestart(ctx, minutes: Union[int, str] = None):
         embed.add_field(name="Notification", value=success_msg)
         await ctx.send(embed=embed)
 
+#version
+@bot.command()
+async def version(ctx):
+    embed = discord.Embed(
+        title="JavaAutomation Version",
+        description="Version: " + str(scriptVersion),
+        color=discord.Color.from_rgb(255, 182, 193)
+    )
+    await ctx.send(embed=embed)
 
 # paid on
 @bot.command()
