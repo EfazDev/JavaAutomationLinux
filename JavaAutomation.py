@@ -1232,19 +1232,6 @@ async def maxprice(ctx, price: int):
 
     await ctx.send(embed=embed)
 
-# easter
-@bot.command()
-async def eastereggggg(ctx, price=123):
-    if price % 69 == 0:
-        embed = discord.Embed(
-            title="JavaAutomation Reward",
-            description="Use code 'JAVA' in Store System Orders server for reward. (Don't tell java lol, 1 time use, https://discord.gg/snQ2yhbN)",
-            color=discord.Color.from_rgb(255, 75, 0),
-        )
-        await ctx.send(embed=embed)
-    else:
-        await ctx.send("key >:((")
-
 
 # maxstock
 @bot.command()
