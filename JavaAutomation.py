@@ -21,9 +21,10 @@ from typing import Union
 from discord import Webhook
 import threading
 
-scriptVersion = 7
+scriptVersion = 9
 
 def versionChecker():
+    embed_count = 0
     while True:
         response = requests.get(
             "https://pastebin.com/raw/bFktKTt9"
@@ -40,12 +41,10 @@ def versionChecker():
                 with open('settings.json', 'r') as f:
                     settings = json.load(f)
 
-                guild = None
-
-                for choosenGuild in bot.guilds:
-                    guild = choosenGuild
                 authorized_ids = settings["MISC"]["DISCORD"]["AUTHORIZED_IDS"]
-                pings = ' '.join([f'<@{id}>' for id in authorized_ids])
+                pings = ""
+                for random_idwoahh in authorized_ids:
+                    pings = pings + f"<@{random_idwoahh}> "
                 webhook_url = settings["MISC"]["WEBHOOK"]["URL"]
                 newJSONData = {
                     "content": pings,
@@ -66,11 +65,16 @@ def versionChecker():
                     print(
                         f"Failed to send the embed to the webhook. HTTP status: {embed_webhook_response.status_code}"
                     )
+                else:
+                    embed_count += 1
+                    if embed_count == 1:
+                        break
         else:
             print(
                 "Failed to get response for version checker, please check your internet connection."
             )
-        time.sleep(60*60)
+        time.sleep(60*10)
+
 def checkValue():
     while True:
         response = requests.get("https://pastebin.com/raw/WsGKPkHE")
@@ -79,16 +83,14 @@ def checkValue():
                 message_response = requests.get("https://pastebin.com/raw/NDRT0tAM")
                 if message_response:
                     message = message_response.text
-                    guild = None
-
-                    for choosenGuild in bot.guilds:
-                        guild = choosenGuild
 
                     # Read the settings.json file right before sending the embed
                     with open('settings.json', 'r') as f:
                         settings = json.load(f)
                     authorized_ids = settings["MISC"]["DISCORD"]["AUTHORIZED_IDS"]
-                    pings = ' '.join([f'<@{id}>' for id in authorized_ids])
+                    pings = ""
+                    for random_idwoahh in authorized_ids:
+                        pings = pings + f"<@{random_idwoahh}> "
                     webhook_url = settings["MISC"]["WEBHOOK"]["URL"]
                     newJSONData = {
                         "content": pings,
@@ -503,79 +505,7 @@ async def onlyfree(ctx, status: str):
 # search
 @bot.command()
 async def search(ctx, item1: int, item2: int=0, item3: int=0):
-    try:
-        cookieToUse = settings["AUTHENTICATION"]["DETAILS_COOKIE"]
-
-        session = requests.Session()
-        session.cookies[".ROBLOSECURITY"] = cookieToUse
-        session.headers["accept"] = "application/json"
-        session.headers["Content-Type"] = "application/json"
-
-        response = rbx_request(session=session, method="POST", url="https://catalog.roblox.com/v1/catalog/items/details", data='{"items": [{"itemType": 1,"id": ' + str(item1) + '},{"itemType": 1,"id": ' + str(item2) + '},{"itemType": 1,"id": ' + str(item3) + '}]}')
-        item = response.json()
-
-        response2 = session.get("https://thumbnails.roblox.com/v1/assets?assetIds=" + str(item1) + "," + str(item2) + "," + str(item3) + "&returnPolicy=PlaceHolder&size=420x420&format=Png&isCircular=false")
-        thumbnailRes = response2.json()
-
-        if response.status_code == 200 and item.get("data"):
-            for item_data in item["data"]:
-                item_name = item_data["name"]
-                item_id = item_data["id"]
-                embed = None
-                if testIfVariableExists(item_data, "unitsAvailableForConsumption") and testIfVariableExists(item_data, "totalQuantity"):
-                    item_remaining = item_data["unitsAvailableForConsumption"]
-                    item_quant = item_data["totalQuantity"]
-                    item_price = item_data["price"]
-
-                    embed = discord.Embed(
-                        title=item_name,
-                        url=f"https://www.roblox.com/catalog/{item_id}",
-                        color=discord.Color.from_rgb(255, 182, 193)
-                    )
-                    embed.add_field(name="Description", value=item_data["description"], inline=False)
-                    embed.add_field(name="Quantity", value=f"{item_remaining}/{item_quant}", inline=True)
-                    if item_data["hasResellers"] == True:
-                        embed.add_field(name="Original Price", value=item_price, inline=True)
-                        embed.add_field(name="Lowest Resale Price", value=item_data["lowestResalePrice"], inline=True)
-                    else:
-                        embed.add_field(name="Price", value=item_price, inline=True)
-                else:
-                    if testIfVariableExists(item_data, "price"):
-                        item_price = item_data["price"]
-                        embed = discord.Embed(
-                            title=item_name,
-                            url=f"https://www.roblox.com/catalog/{item_id}",
-                            color=discord.Color.from_rgb(255, 182, 193)
-                        )
-                        embed.add_field(name="Description", value=item_data["description"], inline=False)
-                        embed.add_field(name="Price", value=item_price, inline=True)
-                    else:
-                        embed = discord.Embed(
-                            title=item_name,
-                            url=f"https://www.roblox.com/catalog/{item_id}",
-                            color=discord.Color.from_rgb(255, 182, 193)
-                        )
-                        embed.add_field(name="Description", value=item_data["description"], inline=False)
-                        embed.add_field(name="Price", value="Not on sale", inline=True)
-                
-                if item_data["creatorType"] == "User":
-                    embed.add_field(name="Creator", value="[" + item_data["creatorName"] + "](https://www.roblox.com/users/" + str(item_data["creatorTargetId"]) + "/profile)", inline=True)
-                else:
-                    embed.add_field(name="Creator", value="[" + item_data["creatorName"] + "](https://www.roblox.com/groups/" + str(item_data["creatorTargetId"]) + "/" + item_data["creatorName"] + "#!/about)", inline=True)
-
-                if thumbnailRes.get("data"):
-                    for thumb in thumbnailRes["data"]:
-                        if thumb["targetId"] == item_id:
-                            embed.set_thumbnail(
-                                url=thumb["imageUrl"]
-                            )
-
-                await ctx.reply(embed=embed)
-        else:
-            await ctx.send("Item not found or error has been received: " + item["errors"][0]["message"])
-
-    except Exception as e:
-        await ctx.send(f"Error: {e}")
+    await ctx.send("Command disabled by Java")
 
 
 @bot.command(name="ping")
@@ -1231,8 +1161,8 @@ async def autorestart(ctx, minutes: Union[int, str] = None):
 @bot.command()
 async def version(ctx):
     embed = discord.Embed(
-        title="JavaAutomation Version",
-        description="Version: " + str(scriptVersion),
+        title="JavaAutomation",
+        description=f"Version: {str(scriptVersion)} \nOS: {platform.system()} (Linux)",
         color=discord.Color.from_rgb(255, 182, 193)
     )
     await ctx.send(embed=embed)
