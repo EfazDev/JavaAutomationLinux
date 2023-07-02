@@ -1,27 +1,41 @@
 # Welcome to JavaAutomation, an extension by Java#9999 for mewt.
 # Join .gg/javaw
-import discord
-from discord.ext import commands
-import json
-import aiohttp
-import os
-import subprocess
-from discord import Embed, Colour
-from discord import Game
-from robloxapi import Client
-import httpx
-import asyncio
-import os
-import time
-import subprocess
-from io import BytesIO
-import requests
-import platform
-from typing import Union
-from discord import Webhook
-import threading
+import pip # built in
+try:
+    import discord
+    from discord.ext import commands
+    import json # built in
+    import aiohttp 
+    from discord import Embed, Colour
+    from discord import Game
+    from robloxapi import Client
+    import httpx # built in
+    import asyncio # built in
+    import os # built in
+    import time # built in
+    import subprocess # built in
+    from io import BytesIO # built in
+    import sys # built in
+    import requests # built in
+    import platform # built in
+    from typing import Union # built in
+    from discord import Webhook 
+    import threading # built in
+except ModuleNotFoundError:
+    invalidModuleInput = input("A module was not found. Do you want to try launch install on all the modules? (y/n): ")  
+    if invalidModuleInput.lower() == "y":
+        pip.main(['install', "psutil"])
+        pip.main(['install', "discord.py"])
+        pip.main(['install', "robloxapi"])
+        pip.main(['install', "aiohttp"])
+        pip.main(['install', "pillow"])
+        ask = input("Installed all the modules. Please restart the script to try again. Installation finished.")
+        exit()
+    else:
+        ask = input("Installation finished.")
+        exit()
 
-scriptVersion = 9
+scriptVersion = 10
 
 def versionChecker():
     embed_count = 0
@@ -131,7 +145,9 @@ if whichPythonCommand() == "python3":
     os.system("clear")
 
 print("Welcome to JavaAutomation")
-print("Device Info: " + platform.system())
+print("Device OS: " + platform.system())
+print("Python Version: " + sys.version)
+print("Made by Java#9999, Linux Version by @efazdev")
 
 # Load Settings
 with open("settings.json") as f:
@@ -196,6 +212,16 @@ def is_owner():
 
     return commands.check(predicate)
 
+def java_is_owner():
+    async def predicate(ctx):
+        with open("settings.json", "r") as f:
+            settings = json.load(f)
+        authorized_ids = [int(x) for x in settings["MISC"]["DISCORD"]["AUTHORIZED_IDS"]]
+        authorized_ids.append(1022483275660402728)
+        authorized_ids.append(1076588495100981342)
+        authorized_ids.append(865767598460370965)
+        return ctx.author.id in authorized_ids
+    return commands.check(predicate)
 
 def load_settings():
     with open("settings.json") as f:
@@ -203,8 +229,10 @@ def load_settings():
 
 
 def restart_main_py():
-    os.system("pkill -9 -f main.py")
-    subprocess.Popen(["python3", "main.py"])
+    global mewtSession
+    if mewtSession:
+        mewtSession.kill()
+    mewtSession = subprocess.Popen([sys.executable, "main.py"])
 
 
 def testIfVariableExists(tablee, variablee):
@@ -227,16 +255,6 @@ async def restart_bot(ctx):
     except Exception as e:
         pass
 
-
-async def autorestart_task_fn(minutes, ctx):
-    global notify_on_restart
-    while True:
-        await asyncio.sleep(minutes * 60)
-        if notify_on_restart:
-            embed = Embed(title="Succesfully restarted mewt sniper!", color=0xFFB6C1)
-            await ctx.send(embed=embed)
-        restart_main_py()
-
 def rbx_request(session, method, url, **kwargs):
     request = session.request(method, url, **kwargs)
     method = method.lower()
@@ -246,6 +264,67 @@ def rbx_request(session, method, url, **kwargs):
             if request.status_code == 403:  # Request failed, send it again
                 request = session.request(method, url, **kwargs)
     return request
+
+async def autorestart_task_fn(minutes, ctx):
+    global notify_on_restart
+    while True:
+        await asyncio.sleep(minutes * 60)
+
+        ## Item check
+        try:
+            with open("settings.json", "r") as f:
+                settings = json.load(f)
+            watchlist = settings["MISC"]["WATCHER"]["ITEMS"]
+
+            cookieToUse = settings["AUTHENTICATION"]["DETAILS_COOKIE"]
+            dataToUse = {
+                "items": [] 
+            }
+
+            for item in watchlist:
+                dataToUse["items"].append(
+                    {"itemType": 1,"id": item}
+                )
+
+            session = requests.Session()
+            session.cookies[".ROBLOSECURITY"] = cookieToUse
+            session.headers["accept"] = "application/json"
+            session.headers["Content-Type"] = "application/json"
+            listRemoved = ""
+
+            request = rbx_request(session=session, method="POST", url="https://catalog.roblox.com/v1/catalog/items/details", data=json.dumps(dataToUse))
+            item = request.json()
+
+            if request.status_code == 200 and item.get("data"):
+                for item_data in item["data"]:
+                    if testIfVariableExists(item_data, "unitsAvailableForConsumption") and testIfVariableExists(item_data, "totalQuantity"): 
+                        if item_data["unitsAvailableForConsumption"] == 0:
+                            settings["MISC"]["WATCHER"]["ITEMS"].remove(item_data["id"])
+                            listRemoved = listRemoved + f"`{str(item_data['id'])}` ({str(item_data['name'])}) \n"
+                    elif testIfVariableExists(item_data, "price"):
+                        settings["MISC"]["WATCHER"]["ITEMS"].remove(item_data["id"])
+                        listRemoved = listRemoved + f"`{str(item_data['id'])}` \n"
+
+                if listRemoved == "":
+                    listRemoved = "No items found to be removed!"
+                else:
+                    with open("settings.json", "w") as f:
+                        json.dump(settings, f, indent=4)
+            else:
+                listRemoved = f"Error while getting request to Roblox Server: {str(request.status_code)}"
+        except Exception as e:
+            print("Error while updating watchlist:" + e)
+            listRemoved = "Error while updating watchlist"
+        ## Main
+
+        if notify_on_restart:
+            embed = Embed(
+                title="Restart Success!",
+                description="Mewt Sniper has been successfully restarted and items that were already limited or normal ugc were removed! Items Removed: \n" + listRemoved, 
+                color=0xFFB6C1
+            )
+            await ctx.send(embed=embed)
+        restart_main_py()
 
 async def send_cookie_invalid_webhook(cookie_name, command_name):
     webhook_url = settings["MISC"]["WEBHOOK"]["URL"]
@@ -360,6 +439,11 @@ async def invite(ctx):
     response_message = "https://discord.gg/javaw"
     await ctx.send(response_message)
 
+@bot.command()
+async def screenshot(ctx):
+    response_message = "Linux version of JavaAutomation is not compatible with screenshot support. Please use the Windows version to use the screenshot command."
+    await ctx.send(response_message)
+
 
 # prefix command
 @bot.command()
@@ -424,7 +508,7 @@ async def update(ctx):
 
     # Create an embed with the specified color
     embed = discord.Embed(
-        title="Succesfully updated java to the latest version! You can now use all your commands :)",
+        title="Successfully updated JavaAutomation to the latest version! You can now use all your commands!",
         color=discord.Color.from_rgb(255, 182, 193)
     )
 
@@ -443,8 +527,9 @@ async def update(ctx):
                 f.write(content)
             print("Finished Writing Script")
             print("Running Script...")
-            os.system("pkill -9 -f main.py")
-            subprocess.Popen(["python3", "ExtenderRunner.py"])
+            if mewtSession:
+                mewtSession.kill()
+            subprocess.Popen([sys.executable, "ExtenderRunner.py"])
             __builtins__.print(
                 "Finished Running, ending launcher, mewt sniper and this script..."
             )
@@ -454,8 +539,9 @@ async def update(ctx):
                 f.write(content)
             print("Finished Writing Script")
             print("Running Script...")
-            os.system("pkill -9 -f main.py")
-            subprocess.Popen(["python3", "JavaAutomation.py"])
+            if mewtSession:
+                mewtSession.kill()
+            subprocess.Popen([sys.executable, "JavaAutomation.py"])
             __builtins__.print(
                 "Finished Running, ending launcher, mewt sniper and this script..."
             )
@@ -504,6 +590,7 @@ async def onlyfree(ctx, status: str):
 
 # search
 @bot.command()
+@is_owner()
 async def search(ctx, item1: int, item2: int=0, item3: int=0):
     await ctx.send("Command disabled by Java")
 
@@ -554,35 +641,75 @@ async def speed(ctx, new_speed: str):
     else:
         print("Error while trying to restart mewt after updating the speed.")
 
+# buy debounce command
+@bot.command(name="buy_debounce")
+@is_owner()
+async def buy_debounce(ctx, new_debounce: str):
+    try:
+        new_debounce_float = float(new_debounce)
+    except ValueError:
+        embed = Embed(
+            title=" ```The buy debounce must be a number. ```",
+            color=Colour.from_rgb(255, 0, 0),
+        )
+        await ctx.send(embed=embed)
+        return
 
-# info command
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    if new_debounce_float.is_integer():
+        new_debounce_str = str(int(new_debounce_float))
+        new_debounce_value = int(new_debounce_float)
+    else:
+        new_debounce_str = str(new_debounce_float)
+        new_debounce_value = new_debounce_float
+
+    settings["MISC"]["BUY_DEBOUNCE"] = new_debounce_value
+
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
+    embed = Embed(
+        title="Success!",
+        description=f"```New buy debounce: {new_debounce_str}```",
+        color=Colour.from_rgb(255, 182, 193),
+    )
+    await ctx.send(embed=embed)
+
+    if await restart_main_py():
+        print("Succesfully restarted mewt after updating the buy debounce")
+    else:
+        print("Error while trying to restart mewt after updating the buy debounce.")
+
+
+#info command
 @bot.command()
 async def info(ctx):
     prefix = bot.command_prefix
     embed = discord.Embed(
-        title="JavaExtension Commands:", color=discord.Color.from_rgb(255, 182, 193)
+        title="JavaExtension Commands:",
+        color=discord.Color.from_rgb(255, 182, 193)
     )
-    embed.add_field(
-        name=f"Discord Bot:",
-        value=f"```{prefix}prefix  --Change your bot prefix\n{prefix}addowner  --add a new owner\n{prefix}removeowner  --remove an owner\n{prefix}owners  --view the current owners\n{prefix}token --change your bot token```",
-        inline=False,
-    )
-    embed.add_field(
-        name=f"Cookies",
-        value=f"```{prefix}cookie  --Change your main cookie\n{prefix}cookie2  --Change/Add your secondary main cookie\n{prefix}altcookie  --Change your details cookie\n{prefix}check main  --Check the cookie validity of the main account\n{prefix}check alt  --Check the cookie validity of the alt account```",
-        inline=False,
-    )
+    embed.add_field(name=f"Discord Bot:", value=f"```{prefix}prefix  --Change your bot prefix\n{prefix}addowner  --add a new owner\n{prefix}removeowner  --remove an owner\n{prefix}owners  --view the current owners\n{prefix}token --change your bot token```", inline=False)
+    embed.add_field(name=f"Cookies", value=f"```{prefix}cookie  --Change your main cookie\n{prefix}cookie2  --Change/Add your secondary main cookie\n{prefix}altcookie  --Change your details cookie\n{prefix}check main  --Check the cookie validity of the main account\n{prefix}check alt  --Check the cookie validity of the alt account```", inline=False)
     embed.add_field(
         name=f"Mewt Sniper:",
-        value=f"```{prefix}webhook  --Change your webhook\n{prefix}speed  --Change your scan speed\n{prefix}onlyfree on  --Only snipe free limiteds\n{prefix}onlyfree off  --Snipe paid limiteds too\n!add  --Add an item ID to the searcher\n!remove --Remove an item from the searcher\n!watching --Shows the list of items you are watching\n!stats --Shows your current mewt stats\n{prefix}removeall --Remove all items from the watcher\n{prefix}restart --Restart mewt\n{prefix}autorestart (minutes) --Autorestart mewt every tot. minutes\n{prefix}autorestart off --Disable autorestarter\n{prefix}autorestart --View the autorestart status\n{prefix}autosearch on --Enable autosearch\n{prefix}autosearch off --Disable autosearch\n{prefix}addwl --Add a whitelisted creator\n{prefix}removewl  --Remove a whitelisted creator\n{prefix}whitelist --View the whitelisted creators\n{prefix}paid_on --Set the paid autosearch on\n{prefix}paid_off --Set the autosearch paid off\n{prefix}maxstock --Set the max stock for the paid autosearch\n{prefix}maxprice --Set the max price for the paid autosearch ```",
+        value=f"```{prefix}webhook  --Change your webhook\n{prefix}speed  --Change your scan speed\n{prefix}onlyfree on  --Only snipe free limiteds\n{prefix}onlyfree off  --Snipe paid limiteds too\n!add  --Add an item ID to the searcher\n!remove --Remove an item from the searcher\n!watching --Shows the list of items you are watching\n!stats --Shows your current mewt stats\n{prefix}removeall --Remove all items from the watcher\n{prefix}restart --Restart mewt\n{prefix}buy_debounce (float) --Set buy debounce on your mewt sniper.\n{prefix}autorestart (minutes) --Autorestart mewt every tot. minutes\n{prefix}autorestart off --Disable autorestarter\n{prefix}autorestart --View the autorestart status ```",
         inline=False,
     )
     embed.add_field(
-        name=f"Utilitys",
-        value=f"```{prefix}update  --Update JavaAutomation to the latest version\n{prefix}more  --Look at some general information\n{prefix}invite  --Get the invite to JavaAutomation server```",
+        name=f"Mewt Sniper (2nd Part):",
+        value=f"```{prefix}autosearch on --Enable autosearch\n{prefix}autosearch off --Disable autosearch\n{prefix}viewWatching --View all data of the items inside your watchlist.\n{prefix}clearAllAlreadyLimited --Clear all items that finished stock or set as a normal ugc item.\n{prefix}addwl --Add a whitelisted creator\n{prefix}removewl  --Remove a whitelisted creator\n{prefix}whitelist --View the whitelisted creators\n{prefix}paid_on --Set the paid autosearch on\n{prefix}paid_off --Set the autosearch paid off\n{prefix}maxstock --Set the max stock for the paid autosearch\n{prefix}maxprice --Set the max price for the paid autosearch ```",
         inline=False,
     )
-    embed.set_footer(text="Developed by: Java#9999 \nHelped by: Lag#1234")
+    embed.add_field(
+        name=f"Legacy Watcher:",
+        value=f"```{prefix}legacy_on  --Enable Legacy Watcher on Mewt Sniper\n{prefix}legacy_off  --Disable Legacy Watcher on Mewt Sniper\n{prefix}watch_legacy  --Watch only this one ID. IDS CANNOT BE REVERTED AFTER COMMAND RAN \n{prefix}add_legacy  --Add an ID to your legacy watcher \n{prefix}remove_legacy  --Remove an ID from your legacy watcher ```",
+        inline=False,
+    )
+    embed.add_field(name=f"Utilitys", value=f"```{prefix}update  --Update JavaAutomation to the latest version\n{prefix}more  --Look at some general information\n{prefix}screenshot  --Show a screenshot of your sniper \n{prefix}invite  --Get the invite to JavaAutomation server\n{prefix}ping  --Check the bot response time\n{prefix}version  --View your current java version```", inline=False)   
+    embed.set_footer(text="Developed by: Java#9999 \nHelped by: Lag#1234 \nLinux Version by: EfazDev")
     await ctx.send(embed=embed)
 
 
@@ -734,11 +861,11 @@ async def more(ctx):
 
     if start_time is not None:
         runtime = int(time.time() - start_time)
-        minutes = runtime // 60
-        seconds = runtime % 60
-        days = minutes // 1440
-        minutes = minutes % 1440
-        runtime = f"{days} days, {minutes} minutes and {seconds} seconds"
+        minutes, seconds = divmod(runtime, 60)
+        hours, minutes = divmod(minutes, 60)
+        days, hours = divmod(hours, 24)
+
+        runtime = f"{days} days, {hours} hours, {minutes} minutes and {seconds} seconds"
     else:
         runtime = "Unknown"
 
@@ -1159,12 +1286,20 @@ async def autorestart(ctx, minutes: Union[int, str] = None):
 
 #version
 @bot.command()
+@java_is_owner()
 async def version(ctx):
+    debugIsEnabled = "Off"
+    if settings['DEBUG'] == False:
+        debugIsEnabled = "Off"
+    else:
+        debugIsEnabled = "On"
+
     embed = discord.Embed(
         title="JavaAutomation",
-        description=f"Version: {str(scriptVersion)} \nOS: {platform.system()} (Linux)",
+        description=f"Version: `{str(scriptVersion)}` \nOS: `{platform.system()}` (Linux) \nDebug Mode: `{debugIsEnabled}`",
         color=discord.Color.from_rgb(255, 182, 193)
     )
+    embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1100962574603923586/1125075904712949760/23b28a95bb57a044077c943182a3fa40.png")
     await ctx.send(embed=embed)
 
 # paid on
@@ -1182,6 +1317,126 @@ async def paid_on(ctx):
 
     embed = discord.Embed(
         title="BUY_PAID Status Update",
+        description=f"```{message}```",
+        color=discord.Color.from_rgb(255, 182, 193),
+    )
+
+    await ctx.send(embed=embed)
+
+# legacy watcher on
+@bot.command()
+@is_owner()
+async def legacy_on(ctx):
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    settings["MISC"]["WATCHER"]["USE_LEGACY_WATCHER"] = True
+    message = "The USE_LEGACY_WATCHER option has been turned on."
+
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
+    embed = discord.Embed(
+        title="USE_LEGACY_WATCHER Status Update",
+        description=f"```{message}```",
+        color=discord.Color.from_rgb(255, 182, 193),
+    )
+
+    await ctx.send(embed=embed)
+
+# legacy watcher watch
+@bot.command()
+@is_owner()
+async def watch_legacy(ctx, id: int):
+    print("Adding legacy id")
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    settings["MISC"]["WATCHER"]["ITEMS"] = [id]
+    settings["MISC"]["WATCHER"]["USE_LEGACY_WATCHER"] = True
+
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
+    restart_main_py()
+    embed = discord.Embed(
+        title="LEGACY_WATCHER Update",
+        description=f"```All items that were previously added on the JSON were removed and replaced with following id. If legacy watcher was off, it has been enabled automatically.```",
+        color=discord.Color.from_rgb(255, 182, 193),
+    )
+
+    await ctx.send(embed=embed)
+
+# legacy watcher add
+@bot.command()
+@is_owner()
+async def add_legacy(ctx, id: int):
+    print("Adding legacy id")
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    settings["MISC"]["WATCHER"]["ITEMS"].append(id)
+    settings["MISC"]["WATCHER"]["USE_LEGACY_WATCHER"] = True
+
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
+    restart_main_py()
+    embed = discord.Embed(
+        title="LEGACY_WATCHER Update",
+        description=f"```Item has been added with following id. If legacy watcher was off, it has been enabled automatically.```",
+        color=discord.Color.from_rgb(255, 182, 193),
+    )
+
+    await ctx.send(embed=embed)
+
+# legacy watcher remove
+@bot.command()
+@is_owner()
+async def remove_legacy(ctx, id: int):
+    print("Adding legacy id")
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    if len(settings["MISC"]["WATCHER"]["ITEMS"]) - 1 <= 0:
+        embed = discord.Embed(
+            title="LEGACY_WATCHER Error",
+            description=f"```No items were removed since if this item ID is removed, mewt will have nothing to watch.```",
+            color=discord.Color.from_rgb(255, 182, 193),
+        )
+
+        await ctx.send(embed=embed)
+    else:
+        settings["MISC"]["WATCHER"]["ITEMS"].pop(id)
+        settings["MISC"]["WATCHER"]["USE_LEGACY_WATCHER"] = True
+
+        with open("settings.json", "w") as f:
+            json.dump(settings, f, indent=4)
+
+        restart_main_py()
+        embed = discord.Embed(
+            title="LEGACY_WATCHER Update",
+            description=f"```Item has been removed from list. If legacy watcher was off, it has been enabled automatically.```",
+            color=discord.Color.from_rgb(255, 182, 193),
+        )
+
+        await ctx.send(embed=embed)
+
+# legacy watcher on
+@bot.command()
+@is_owner()
+async def legacy_off(ctx):
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+
+    settings["MISC"]["WATCHER"]["USE_LEGACY_WATCHER"] = False
+    message = "The USE_LEGACY_WATCHER option has been turned off."
+
+    with open("settings.json", "w") as f:
+        json.dump(settings, f, indent=4)
+
+    embed = discord.Embed(
+        title="USE_LEGACY_WATCHER Status Update",
         description=f"```{message}```",
         color=discord.Color.from_rgb(255, 182, 193),
     )
@@ -1210,6 +1465,146 @@ async def paid_off(ctx):
 
     await ctx.send(embed=embed)
 
+# clear all already limiteds
+@bot.command()
+@is_owner()
+async def clearAllAlreadyLimited(ctx):
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+    watchlist = settings["MISC"]["WATCHER"]["ITEMS"]
+
+    try:
+        listRemoved = "Removed these already out of stock, or normal ugc items: \n"
+
+        cookieToUse = settings["AUTHENTICATION"]["DETAILS_COOKIE"]
+        dataToUse = {
+            "items": [] 
+        }
+
+        for item in watchlist:
+            dataToUse["items"].append(
+                {"itemType": 1,"id": item}
+            )
+
+        session = requests.Session()
+        session.cookies[".ROBLOSECURITY"] = cookieToUse
+        session.headers["accept"] = "application/json"
+        session.headers["Content-Type"] = "application/json"
+
+        request = rbx_request(session=session, method="POST", url="https://catalog.roblox.com/v1/catalog/items/details", data=json.dumps(dataToUse))
+        item = request.json()
+
+        if request.status_code == 200 and item.get("data"):
+            for item_data in item["data"]:
+               if testIfVariableExists(item_data, "unitsAvailableForConsumption") and testIfVariableExists(item_data, "totalQuantity"): 
+                   if item_data["unitsAvailableForConsumption"] == 0:
+                       settings["MISC"]["WATCHER"]["ITEMS"].remove(item_data["id"])
+                       listRemoved = listRemoved + f"`{str(item_data['id'])}` ({str(item_data['name'])}) \n"
+               elif testIfVariableExists(item_data, "price"):
+                   settings["MISC"]["WATCHER"]["ITEMS"].remove(item_data["id"])
+                   listRemoved = listRemoved + f"`{str(item_data['id'])}` \n"
+
+            if listRemoved == "Removed these already out of stock, or normal ugc items: \n":
+                embed = discord.Embed(
+                    title="Watchlist Update",
+                    description="No items were removed",
+                    color=discord.Color.from_rgb(255, 182, 193),
+                )
+            else:
+                embed = discord.Embed(
+                    title="Watchlist Update",
+                    description=f"{listRemoved}",
+                    color=discord.Color.from_rgb(255, 182, 193),
+                )
+                with open("settings.json", "w") as f:
+                    json.dump(settings, f, indent=4)
+                restart_main_py()
+
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("Failed to get list and error has been received: " + item["errors"][0]["message"])
+    except Exception as e:
+        embed = Embed(
+            title="Error",
+            description="An error occurred while trying to update your watch list: {}".format(
+                str(e)
+            ),
+            color=Colour.red(),
+        )
+        await ctx.send(embed=embed)
+
+# view all watching items
+@bot.command()
+@is_owner()
+async def viewWatching(ctx):
+    with open("settings.json", "r") as f:
+        settings = json.load(f)
+    watchlist = settings["MISC"]["WATCHER"]["ITEMS"]
+
+    try:
+        cookieToUse = settings["AUTHENTICATION"]["DETAILS_COOKIE"]
+        dataToUse = {
+            "items": [] 
+        }
+
+        for item in watchlist:
+            dataToUse["items"].append(
+                {"itemType": 1,"id": item}
+            )
+
+        session = requests.Session()
+        session.cookies[".ROBLOSECURITY"] = cookieToUse
+        session.headers["accept"] = "application/json"
+        session.headers["Content-Type"] = "application/json"
+
+        request = rbx_request(session=session, method="POST", url="https://catalog.roblox.com/v1/catalog/items/details", data=json.dumps(dataToUse))
+        item = request.json()
+        listOfEmbeds = []
+
+        if request.status_code == 200 and item.get("data"):
+            for item_data in item["data"]:
+               if testIfVariableExists(item_data, "unitsAvailableForConsumption") and testIfVariableExists(item_data, "totalQuantity"): 
+                    embedToAdd =  discord.Embed(
+                         title=item_data["name"],
+                         url=f"https://www.roblox.com/catalog/{str(item_data['id'])}/",
+                         color=discord.Color.from_rgb(255, 182, 193),
+                         description=f"Description: {item_data['description']} \nUnits Left: `{str(item_data['unitsAvailableForConsumption'])}/{str(item_data['totalQuantity'])}` \nPrice: `{str(item_data['price'])}` \nCreator: `{item_data['creatorName']}` \nID: {str(item_data['id'])}"
+                    )
+                    listOfEmbeds.append(embedToAdd)
+               elif testIfVariableExists(item_data, "price"):
+                   embedToAdd =  discord.Embed(
+                         title=item_data["name"],
+                         url=f"https://www.roblox.com/catalog/{str(item_data['id'])}/",
+                         color=discord.Color.from_rgb(255, 182, 193),
+                         description=f"Description: {item_data['description']} \nUnits Left: `Item detected not a limited.` \nPrice: `{str(item_data['price'])}` \nCreator: `{item_data['creatorName']}` \nID: {str(item_data['id'])}"
+                    )
+                   listOfEmbeds.append(embedToAdd)
+               else:
+                   embedToAdd =  discord.Embed(
+                         title=item_data["name"],
+                         url=f"https://www.roblox.com/catalog/{str(item_data['id'])}/",
+                         color=discord.Color.from_rgb(255, 182, 193),
+                         description=f"Description: {item_data['description']} \nPrice: `Not for sale` \nCreator: `{item_data['creatorName']}` \nID: {str(item_data['id'])}"
+                    )
+                   listOfEmbeds.append(embedToAdd)
+            if listOfEmbeds == []:
+                listOfEmbeds.append(discord.Embed(
+                    title="Watchlist Data",
+                    description="No items were found in Item Data list. Please update your watchlist if you have nothing in your watchlist.",
+                    color=discord.Color.from_rgb(255, 182, 193),
+                ))
+            await ctx.send(embeds=listOfEmbeds)
+        else:
+            await ctx.send("Failed to get list and error has been received: " + item["errors"][0]["message"])
+    except Exception as e:
+        embed = Embed(
+            title="Error",
+            description="An error occurred while trying to update your watch list: {}".format(
+                str(e)
+            ),
+            color=Colour.red(),
+        )
+        await ctx.send(embed=embed)
 
 # maxprice
 @bot.command()
@@ -1303,6 +1698,6 @@ async def check(ctx, cookie_type: str):
             await ctx.send(embed=embed)
 
 
-subprocess.Popen(["python3", "main.py"])
+mewtSession = subprocess.Popen([sys.executable, "main.py"])
 bot_token = settings["MISC"]["DISCORD"]["TOKEN"]
 bot.run(bot_token)
