@@ -35,7 +35,7 @@ except ModuleNotFoundError:
         ask = input("Installation finished.")
         exit()
 
-scriptVersion = 10
+scriptVersion = 11
 
 def versionChecker():
     embed_count = 0
@@ -227,13 +227,15 @@ def load_settings():
     with open("settings.json") as f:
         return json.load(f)
 
-
 def restart_main_py():
     global mewtSession
     if mewtSession:
-        mewtSession.kill()
-    mewtSession = subprocess.Popen([sys.executable, "main.py"])
-
+        os.system("pkill -9 -f main.py")
+        mewtSession = subprocess.Popen([sys.executable, "main.py"])
+    else:
+        print("WARNING! Mewt Process was not found! Using old restarter!")
+        os.system("pkill -9 -f main.py")
+        mewtSession = subprocess.Popen([sys.executable, "main.py"])
 
 def testIfVariableExists(tablee, variablee):
     if tablee is dict:
@@ -366,7 +368,6 @@ async def check_cookie(cookie):
 def update_settings(new_settings):
     with open("settings.json", "w") as file:
         json.dump(new_settings, file, indent=4)
-
 
 async def get_user_id_from_cookie(cookie):
     api_url = "https://www.roblox.com/mobileapi/userinfo"
@@ -1320,6 +1321,7 @@ async def paid_on(ctx):
         description=f"```{message}```",
         color=discord.Color.from_rgb(255, 182, 193),
     )
+    restart_main_py()
 
     await ctx.send(embed=embed)
 
@@ -1341,6 +1343,7 @@ async def legacy_on(ctx):
         description=f"```{message}```",
         color=discord.Color.from_rgb(255, 182, 193),
     )
+    restart_main_py()
 
     await ctx.send(embed=embed)
 
@@ -1435,6 +1438,8 @@ async def legacy_off(ctx):
     with open("settings.json", "w") as f:
         json.dump(settings, f, indent=4)
 
+    restart_main_py()
+
     embed = discord.Embed(
         title="USE_LEGACY_WATCHER Status Update",
         description=f"```{message}```",
@@ -1462,6 +1467,7 @@ async def paid_off(ctx):
         description=f"```{message}```",
         color=discord.Color.from_rgb(255, 182, 193),
     )
+    restart_main_py()
 
     await ctx.send(embed=embed)
 
@@ -1625,6 +1631,8 @@ async def maxprice(ctx, price: int):
         color=discord.Color.from_rgb(255, 182, 193),
     )
 
+    restart_main_py()
+
     await ctx.send(embed=embed)
 
 
@@ -1646,6 +1654,8 @@ async def maxstock(ctx, stock: int):
         description=f"```{message}```",
         color=discord.Color.from_rgb(255, 182, 193),
     )
+
+    restart_main_py()
 
     await ctx.send(embed=embed)
 
