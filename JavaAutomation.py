@@ -529,7 +529,7 @@ async def update(ctx):
             print("Finished Writing Script")
             print("Running Script...")
             if mewtSession:
-                mewtSession.kill()
+                os.system("pkill -9 -f main.py")
             subprocess.Popen([sys.executable, "ExtenderRunner.py"])
             __builtins__.print(
                 "Finished Running, ending launcher, mewt sniper and this script..."
@@ -541,7 +541,7 @@ async def update(ctx):
             print("Finished Writing Script")
             print("Running Script...")
             if mewtSession:
-                mewtSession.kill()
+                os.system("pkill -9 -f main.py")
             subprocess.Popen([sys.executable, "JavaAutomation.py"])
             __builtins__.print(
                 "Finished Running, ending launcher, mewt sniper and this script..."
