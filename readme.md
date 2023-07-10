@@ -32,13 +32,13 @@ Java has deleted the server since now the extension is a big logger inspiration,
 ## What should you do if you were affected?
 If you're one of them in the list, remember to revoke the cookie you used with the extension to prevent the loss of more robux ASAP and start a Roblox support ticket to start a rollback of the purchase Java may have bought. Unfortunately, I haven't earned anything from this, so I can't refund the affected users that lost their robux/limiteds if the ticket failed. 
 
-## Why I did this
-I thought it doesn't matter as long as I don't get in trouble with anyone. Well, I doubted that lot and sadly I am banned from mewt and some other servers. 
+## Why did I do this
+I thought it doesn't matter as long as I don't get in trouble with anyone. Well, I doubted that lot and sadly I am banned from mewt and some other servers like Rolimons, ZOMG Trading & Giveaways, RblxTrade, Kenneth's Discord and maybe other servers I am in. (Do not harass any of these servers)
 
 ## Was the data deleted?
 After the bans coming in, Java has kicked me from the logger server and while I think this is a wild theory, Java might have deleted the server with the cookies and IP addresses. The answer will maybe may be between a yes or a no as its unsure if the server is deleted or Java just kicked me to prevent more information to come out.
 
-## What I will be doing now
+## What will I be doing now
 I will be working on other projects WITHOUT ANY LOGGING and will help Sliver revamp the project WITH NO LOGGERS. I will also be continuing giveaways (not with the stolen robux or items) on my Discord Server or Twitter. If Java does give me the stolen robux or any amount of it, this will be split between the users listed above. I have no data on what stuff he took or the amount of it on each user so it will just be split.
 
 ## Ending of this message
