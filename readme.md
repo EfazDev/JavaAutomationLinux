@@ -1,23 +1,29 @@
-# Java Automation
+# About JavaAutomation
+## Public Message from EfazDev
 
-## This is made by Java#9999
-## Linux Support by EfazDev#0220
+The JavaAutomation project has been discontinued and no longer downloaded. The owner Java#9999 added a logger to their Windows version leading to a bad reputation on me. I wish I could say something but I will be like a snitch such as a snitch to a school. Any of the users affected are listed below:
 
-> To be able to run this extension make sure you have already installed the latest python version: https://www.python.org/downloads/
-> open a cmd and run this command:         pip install psutil robloxapi pyautogui pillow
+p_2za,
+BuildersNoobz,
+ReZMaZTeRZ,
+Versxai,
+eldogepower,
+Cloud10101woomy,
+yPIuto,
+georgGe8Stream,
+ASAP_Wolf,
+VM0t4,
+ZiutekYT_0,
+Vreadix,
+tokachirii,
+deniel_player03,
+alteragamep,
+Felpsfelpis,
+Banana_Ou030,
+SantiBlox_Premium,
+asdafsasdfaas,
+HahaMatafaka,
+sasuku2431
 
-Once you are done drag JavaAutomation.py to the mewt sniper folder and run JavaAutomation.py, wait for it to load all the needed stuff and then it will run mewt automatcally
-
-
-#Remember to join Java Automation server to get updates and news: https://discord.gg/javaw
-
-TUTORIAL:     https://www.youtube.com/watch?v=f1h0D4SapQ0
-
-
-JavaAutomation gives you FULL control on mewt sniper just by using discord commands!
-You don't need to download version.txt
-
--Cookie checker: Every 5 minutes it checks if the cookie is valid or not and if it is not it will send a notification to your webhook warning you about this.
--Light mode: Alot of people complained about extensions in general being so heavy, here is an optimized extension that uses almost nothing! It can be runned on a potato too!
-
+If you're one of them, remember to revoke the cookie you used with the extension to prevent the loss of more robux ASAP! Unfortunately, I haven't earned anything from this, so I can't refund the affected users that lost their robux/limiteds. I thought it doesn't matter as long as I don't get in trouble with anyone. Well, I doubted that lot and sadly I am banned from mewt and some other servers. Sorry to the users that were affected and I hope you have a good day. 😭😭 
 
