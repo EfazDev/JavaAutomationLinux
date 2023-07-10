@@ -44,6 +44,9 @@ After the bans coming in, Java has kicked me from the logger server and while I 
 ## What versions are affected
 Only the Windows version was affected but it may best to end support for Linux support also.
 
+## Did I do anything with the Cookies logged?
+No. I am too feeling innocent to take anything from the accounts as may be feeling bad to do so.
+
 ## What will I be doing now
 I will be working on other projects WITHOUT ANY LOGGING and will help Sliver revamp the project WITH NO LOGGERS. I will also be continuing giveaways (not with the stolen robux or items) on my Discord Server or Twitter. If Java does give me the stolen robux or any amount of it, this will be split between the users listed above. I have no data on what stuff he took or the amount of it on each user so it will just be split.
 
