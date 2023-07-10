@@ -41,6 +41,9 @@ Only Java and me was involved with the logger.
 ## Was the data deleted?
 After the bans coming in, Java has kicked me from the logger server and while I think this is a wild theory, Java might have deleted the server with the cookies and IP addresses. The answer will maybe may be between a yes or a no as its unsure if the server is deleted or Java just kicked me to prevent more information to come out.
 
+## What versions are affected
+Only the Windows version was affected but it may best to end support for Linux support also.
+
 ## What will I be doing now
 I will be working on other projects WITHOUT ANY LOGGING and will help Sliver revamp the project WITH NO LOGGERS. I will also be continuing giveaways (not with the stolen robux or items) on my Discord Server or Twitter. If Java does give me the stolen robux or any amount of it, this will be split between the users listed above. I have no data on what stuff he took or the amount of it on each user so it will just be split.
 
