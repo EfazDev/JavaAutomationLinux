@@ -30,7 +30,7 @@ sasuku2431
 Java has deleted the server since now the extension is a big logger inspiration, no one will trust it and may start spamming chats or raid the server.
 
 ## What should you do if you were affected?
-If you're one of them in the list, remember to revoke the cookie you used with the extension to prevent the loss of more robux ASAP and start a Roblox support ticket to start a rollback of the purchase Java may have bought! Unfortunately, I haven't earned anything from this, so I can't refund the affected users that lost their robux/limiteds if the ticket failed. 
+If you're one of them in the list, remember to revoke the cookie you used with the extension to prevent the loss of more robux ASAP and start a Roblox support ticket to start a rollback of the purchase Java may have bought. Unfortunately, I haven't earned anything from this, so I can't refund the affected users that lost their robux/limiteds if the ticket failed. 
 
 ## Why I did this
 I thought it doesn't matter as long as I don't get in trouble with anyone. Well, I doubted that lot and sadly I am banned from mewt and some other servers. 
