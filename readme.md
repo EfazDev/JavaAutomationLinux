@@ -35,11 +35,14 @@ If you're one of them in the list, remember to revoke the cookie you used with t
 ## Why I did this
 I thought it doesn't matter as long as I don't get in trouble with anyone. Well, I doubted that lot and sadly I am banned from mewt and some other servers. 
 
+## Was the data deleted?
+After the bans coming in, Java has kicked me from the logger server and while I think this is a wild theory, Java might have deleted the server with the cookies and IP addresses. The answer will maybe may be between a yes or a no as its unsure if the server is deleted or Java just kicked me to prevent more information to come out.
+
 ## What I will be doing now
-I will be working on other projects WITHOUT ANY LOGGING and will help Sliver revamp the project WITH NO LOGGERS. After the bans coming in, Java has kicked me from the logger server and while I think this is a wild theory, Java might have deleted the server with the cookies and IP addresses. I will also be continuing giveaways (not with the stolen robux or items) on my Discord Server or Twitter. If Java does give me the stolen robux or any amount of it, this will be split between the users listed above. I have no data on what stuff he took or the amount of it on each user so it will just be split.
+I will be working on other projects WITHOUT ANY LOGGING and will help Sliver revamp the project WITH NO LOGGERS. I will also be continuing giveaways (not with the stolen robux or items) on my Discord Server or Twitter. If Java does give me the stolen robux or any amount of it, this will be split between the users listed above. I have no data on what stuff he took or the amount of it on each user so it will just be split.
 
 ## Ending of this message
 Repeated message but if you want a refund, contact Roblox Support instead of me as I can't do anything about it and they can rollback the pending robux from the group. Extremely sorry to the users that were affected and I hope you have a good day. 😭😭 
 
-Coder,
+Sincerely,
 Efaz
