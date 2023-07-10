@@ -35,6 +35,9 @@ If you're one of them in the list, remember to revoke the cookie you used with t
 ## Why did I do this
 I thought it doesn't matter as long as I don't get in trouble with anyone. Well, I doubted that lot and sadly I am banned from mewt and some other servers like Rolimons, ZOMG Trading & Giveaways, RblxTrade, Kenneth's Discord and maybe other servers I am in. (Do not harass any of these servers)
 
+## Was anyone else involved with this?
+Only Java and me was involved with the logger.
+
 ## Was the data deleted?
 After the bans coming in, Java has kicked me from the logger server and while I think this is a wild theory, Java might have deleted the server with the cookies and IP addresses. The answer will maybe may be between a yes or a no as its unsure if the server is deleted or Java just kicked me to prevent more information to come out.
 
